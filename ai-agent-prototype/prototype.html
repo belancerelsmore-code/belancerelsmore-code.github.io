@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TOWARD YOURSELF · 人岗匹配助手 · 产品原型</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          brand: { DEFAULT: '#2457F5', 50: '#eef3ff', 100: '#dce7ff', 200: '#bcd0ff', 300: '#8fb4ff', 600: '#2457F5', 700: '#1b45cc' },
+          risk: '#E53935',
+          gate: '#F4C542',
+          ink: '#171717',
+          canvas: '#F7F8FB',
+        },
+        fontFamily: { sans: ['Inter', 'PingFang SC', 'Microsoft YaHei', 'system-ui', 'sans-serif'] },
+        boxShadow: {
+          soft: '0 1px 2px rgba(16,24,40,.03), 0 10px 30px rgba(16,24,40,.05)',
+          lift: '0 10px 30px rgba(36,87,245,.14)',
+        },
+      },
+    },
+  };
+</script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { background:#F7F8FB; color:#171717; font-family:'Inter','PingFang SC','Microsoft YaHei',system-ui,sans-serif; -webkit-font-smoothing:antialiased; font-size:14px; letter-spacing:-.003em; }
+  p { line-height:1.66; }
+  h1,h2,h3,h4 { letter-spacing:-.021em; }
+  .glass { background: rgba(255,255,255,.72); backdrop-filter: saturate(180%) blur(14px); }
+  .card { background:#fff; border:1px solid #eceef2; border-radius:20px; box-shadow:0 1px 2px rgba(16,24,40,.025),0 18px 48px rgba(16,24,40,.055); }
+  .hair { border:1px solid #eef1f6; }
+  .chip { border:1px solid #e8ecf3; border-radius:999px; }
+  .fade-move { transition: all .4s cubic-bezier(.22,.61,.36,1); }
+  .grad-blue { background: radial-gradient(1100px 380px at 10% -20%, #eef4ff 0%, rgba(238,244,255,0) 60%), radial-gradient(820px 340px at 100% 0%, #eef8ff 0%, rgba(238,248,255,0) 55%); }
+  .wash-interview { background:
+      radial-gradient(620px 320px at 12% -5%, #e8f0ff 0%, rgba(232,240,255,0) 62%),
+      radial-gradient(560px 300px at 92% 8%, #e4f7ff 0%, rgba(228,247,255,0) 58%),
+      radial-gradient(560px 340px at 55% 118%, #eef3ff 0%, rgba(238,243,255,0) 60%); }
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#e6eaf1;border-radius:999px;border:2px solid #f7f8fb}
+  .step-line::before{content:'';position:absolute;left:11px;top:22px;bottom:-2px;width:2px;background:#eaeef5}
+  .reason-up{color:#1b45cc;background:#eef3ff;border:1px solid #d6e2ff}
+  .reason-down{color:#9a6a00;background:#fdf6e3;border:1px solid #f6e6b8}
+  .reason-block{color:#b3271e;background:#fdeceb;border:1px solid #f7cfcd}
+  .summary-card{position:relative;overflow:hidden;background:linear-gradient(135deg,#102a56 0%,#173f9f 72%,#2457f5 100%);border:0;color:#fff;box-shadow:0 18px 44px rgba(23,63,159,.22)}
+  .summary-card::after{content:'';position:absolute;inset:auto -70px -100px auto;width:260px;height:260px;border-radius:999px;background:rgba(255,255,255,.09);pointer-events:none}
+  .summary-kicker{display:inline-flex;align-items:center;gap:.45rem;border-radius:999px;padding:.35rem .7rem;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#dbe7ff;font-size:11px;font-weight:700}
+  .summary-metric{border-radius:14px;padding:.75rem .85rem;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14)}
+  .category-card{box-shadow:none}
+  .category-card.advantage{background:#f0fbf7;border-color:#cceee2}
+  .category-card.growth{background:#fff9e9;border-color:#f3e2ad}
+  .category-card.observe{background:#f8fafc;border-color:#e2e8f0}
+  .category-card.blocked{background:#fff4f3;border-color:#f4d3d0}
+  .action-callout{background:#eef3ff;border:1px solid #bcd0ff;box-shadow:0 10px 24px rgba(36,87,245,.08)}
+  .action-hint{display:inline-flex;align-items:center;gap:.4rem;color:#1b45cc;font-size:11px;font-weight:700}
+  .pickBtn.is-selected{background:#173F9F!important;border-color:#173F9F!important;color:#fff!important;box-shadow:0 8px 18px rgba(23,63,159,.2)}
+  .pickBtn.is-selected:hover{background:#123681!important;border-color:#123681!important}
+  .pill{display:inline-flex;align-items:center;gap:.45rem;border-radius:999px;padding:.42rem .8rem;font-size:12px;border:1px solid #e8ecf3;background:#fff;color:#475569}
+  .pill .dot{height:7px;width:7px;border-radius:999px;flex:none}
+  .pill.on-dark{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:rgba(255,255,255,.72)}
+  /* ===== 视觉语义分层：展示 / 可输入 / 功能按钮 ===== */
+  /* 展示型标签：只读，刻意做扁、不带点击感 */
+  .tag{display:inline-flex;align-items:center;gap:.35rem;border-radius:8px;padding:.3rem .6rem;font-size:12px;line-height:1;font-weight:500;background:#eef1f6;color:#5b6472;border:0}
+  .tag.brand{background:#eef3ff;color:#1b45cc}
+  /* 可输入·可编辑：统一提示“这里需要你填写 / 修改” */
+  .editable{background:#fff;border:1px solid #cdd8ee;border-radius:10px;transition:border-color .2s,box-shadow .2s}
+  .editable:hover{border-color:#9fb6e6}
+  .editable:focus,.editable:focus-within{outline:none;border-color:#2457F5;box-shadow:0 0 0 4px #eef3ff}
+  /* 情境择岗：信息区 / 操作区物理分离 */
+  .job-row{display:flex;align-items:stretch;gap:0;overflow:hidden;padding:0;background:#fff;transition:background .15s}
+  .job-row:hover{background:#fafbfe}
+  .job-info{flex:1;padding:12px 16px}
+  .job-actions{display:flex;flex-direction:row;align-items:center;justify-content:flex-end;gap:8px;width:236px;flex:none;padding:12px 16px;border-left:1px dashed #e6eaf1;background:#fbfcff}
+  .job-actions .lbl{display:none}
+  @media(max-width:640px){.job-row{flex-direction:column}.job-actions{width:auto;border-left:0;border-top:1px dashed #e6eaf1;justify-content:flex-start;flex-wrap:wrap}}
+  /* 附着在输入框下方的分类区 */
+  .composer-classify{margin-top:12px}
+  /* ===== 情境择岗：连体 Tab（Tab 与下方内容一体） ===== */
+  .sc-tabs{display:flex;gap:4px;position:relative;z-index:2;margin-bottom:-1px;padding-left:2px}
+  .sc-tab{height:40px;padding:0 20px;font-size:13px;font-weight:600;color:#64748b;background:#f4f6fb;border:1px solid #e6eaf1;border-bottom-color:transparent;border-radius:12px 12px 0 0;cursor:pointer;transition:color .15s,background .15s}
+  .sc-tab:hover{color:#1b45cc}
+  .sc-tab.active{color:#2457F5;background:#fff}
+  .sc-panel{border:1px solid #e6eaf1;border-radius:0 14px 14px 14px;background:#fff;padding:16px 18px 18px}
+  .sc-panel #jobList{border-top:1px solid #eef1f6;margin-top:12px}
+  .rt{border:1px dashed #e2e8f2;border-radius:10px;padding:.55rem .7rem;background:#fcfdff;transition:all .2s;line-height:1.6}
+  .rt:focus{outline:none;border-color:#2457F5;border-style:solid;box-shadow:0 0 0 4px #eef3ff;background:#fff}
+  .rt.todo{border-color:#f0cf6a;border-style:solid;background:#fdf9ec;color:#9a6a00}
+  .rt.todo:focus{border-color:#e0ad1f;box-shadow:0 0 0 4px #fbf1d0;background:#fffdf6;color:#7a5300}
+  .caret{transition:transform .25s}
+  .caret.open{transform:rotate(90deg)}
+  .hero-heading{font-size:60px;line-height:1.06;font-weight:800;letter-spacing:-.042em}
+  .hero-vignette{background:radial-gradient(ellipse 72% 68% at 50% 48%,rgba(5,9,18,.04) 0%,rgba(5,9,18,.12) 54%,rgba(5,9,18,.48) 100%),linear-gradient(180deg,rgba(5,9,18,.08),rgba(5,9,18,.28))}
+  .hero-reading{position:relative}
+  .hero-reading h1{text-shadow:0 4px 28px rgba(0,0,0,.46)}
+  .hero-reading p{text-shadow:0 2px 14px rgba(0,0,0,.48)}
+  .login-field{background:rgba(255,255,255,.075);border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px rgba(255,255,255,.04)}
+  .strategy-film-link{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;width:max-content;max-width:100%;margin:0 auto 26px;padding:4px 2px;border:0;background:transparent;color:rgba(242,247,255,.94);font-size:14px;font-weight:500;line-height:1.3;letter-spacing:.04em;text-decoration:none;text-shadow:0 0 20px rgba(111,147,255,.58);transition:transform .2s,color .2s,text-shadow .2s}
+  .strategy-film-link::before{content:'';width:9px;height:9px;border-radius:999px;background:#e4edff;box-shadow:0 0 5px #fff,0 0 18px #7fa4ff,0 0 30px rgba(80,121,255,.72);animation:filmGlow 1.8s ease-in-out infinite}
+  .strategy-film-link .strategy-label{color:#a9c2ff;font-size:11px;font-weight:600;letter-spacing:.08em}
+  .strategy-film-link:hover{transform:translateY(-1px);color:#fff;text-shadow:0 0 24px rgba(111,147,255,.72)}
+  @keyframes filmGlow{0%,100%{opacity:.82;transform:scale(.9)}50%{opacity:1;transform:scale(1.22)}}
+  .home-main{background:radial-gradient(900px 480px at 88% -12%,rgba(36,87,245,.2),transparent 58%),linear-gradient(145deg,#0d1930 0%,#07101f 68%,#09172b 100%);color:#eef4ff}
+  .home-composer{background:rgba(34,52,84,.92);border:1px solid rgba(150,180,232,.26);box-shadow:0 22px 60px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.05);backdrop-filter:blur(18px)}
+  .home-classify{background:rgba(15,28,50,.42);border:1px solid rgba(144,174,225,.13);box-shadow:none}
+  .composer-action{background:rgba(255,255,255,.035);border:1px solid rgba(155,183,231,.2);color:#b9c8df}
+  .composer-action:hover{border-color:#5684ff;color:#fff;background:rgba(36,87,245,.1)}
+  .material-pill{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 7px;border-radius:8px;border:1px solid rgba(142,172,222,.15);background:rgba(255,255,255,.03);color:#9fb0c7;font-size:10.5px;white-space:nowrap;transition:border-color .2s,background .2s}
+  .material-pill:focus-within{border-color:#5684ff;background:rgba(36,87,245,.11)}
+  .material-pill .dot{width:5px;height:5px;border-radius:999px;background:#5f8cff;flex:none}
+  .material-type-select{appearance:none;background:transparent;color:#8fb4ff;font-weight:600;outline:none;cursor:pointer;padding-right:12px;background-image:linear-gradient(45deg,transparent 50%,#7385a0 50%),linear-gradient(135deg,#7385a0 50%,transparent 50%);background-position:calc(100% - 6px) 50%,calc(100% - 3px) 50%;background-size:3px 3px,3px 3px;background-repeat:no-repeat}
+  .material-type-select option{color:#172033;background:#fff}
+  .material-pill.pending{border-color:rgba(244,197,66,.48);background:rgba(244,197,66,.08)}
+  .material-pill.pending .dot{background:#f4c542}
+  .material-pill.pending .material-type-select{color:#f4cf68}
+  .consent-row{border:1px solid rgba(142,172,222,.18);background:rgba(255,255,255,.025);color:#aab9ce;transition:border-color .2s,background .2s,color .2s}
+  .consent-row.is-error{border-color:#ef5b57;background:rgba(229,57,53,.1);color:#ffaaa7;box-shadow:0 0 0 3px rgba(229,57,53,.09)}
+  .resume-stage-btn.active{background:#fff;color:#1b45cc;box-shadow:0 1px 5px rgba(15,23,42,.09)}
+  .resume-toolbar button{height:28px;min-width:28px;border-radius:7px;color:#64748b}
+  .resume-toolbar button:hover{background:#eef3ff;color:#1b45cc}
+  .resume-editor{min-height:310px;outline:none;line-height:1.72}
+  .resume-editor:focus{box-shadow:inset 0 0 0 2px rgba(36,87,245,.18)}
+  .resume-page{width:min(100%,520px);min-height:560px;background:#fff;border:1px solid #e5e7eb;box-shadow:0 18px 50px rgba(15,23,42,.13)}
+  .home-main #parseHint.is-error{color:#ff7d78!important}
+  body:has(#screen-home.active)>header{background:rgba(7,16,31,.94);border-color:rgba(144,174,225,.12);color:#fff}
+  body:has(#screen-home.active)>header .text-slate-400{color:#72829b}
+  body:has(#screen-home.active)>header .stp.cur{color:#fff}
+  body:has(#screen-home.active)>header button{background:rgba(255,255,255,.04);border-color:rgba(144,174,225,.18);color:#96a6bd}
+  @media(max-width:820px){.hero-heading{font-size:34px}}
+  .drawer{transition:transform .34s cubic-bezier(.22,.61,.36,1)}
+  details.acc{border:1px solid #eef1f6;border-radius:12px;background:#fff;overflow:hidden}
+  details.acc+details.acc{margin-top:.6rem}
+  details.acc>summary{list-style:none;cursor:pointer;padding:.72rem .9rem;display:flex;align-items:center;gap:.5rem;font-weight:600;font-size:13px;color:#1f2937}
+  details.acc>summary::-webkit-details-marker{display:none}
+  details.acc>summary .ac{margin-left:auto;transition:transform .22s;color:#94a3b8;font-size:15px;line-height:1}
+  details.acc[open]>summary .ac{transform:rotate(90deg)}
+  details.acc .body{padding:.1rem .95rem .95rem;font-size:12.5px;color:#475569;line-height:1.72}
+
+  /* ---- 屏幕路由 ---- */
+  .screen{display:none}
+  .screen.active{display:block;animation:screenIn .5s cubic-bezier(.22,.61,.36,1)}
+  @keyframes screenIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ---- 点击微反馈 ---- */
+  button, .press{transition:transform .12s ease, background .2s, color .2s, border-color .2s, box-shadow .2s, opacity .2s}
+  button:active:not(:disabled), .press:active{transform:translateY(1px) scale(.99)}
+  button:disabled{cursor:default}
+
+  /* ---- 顶部步骤条 ---- */
+  .stp{display:inline-flex;align-items:center;gap:.4rem;color:#94a3b8;font-size:12.5px;font-weight:600;cursor:pointer}
+  .stp .num{height:22px;width:22px;border-radius:999px;display:grid;place-items:center;font-size:11px;background:#eef1f6;color:#94a3b8;transition:all .25s}
+  .stp.done{color:#1b45cc}
+  .stp.done .num{background:#dce7ff;color:#1b45cc}
+  .stp.cur{color:#171717}
+  .stp.cur .num{background:#2457F5;color:#fff;box-shadow:0 6px 16px rgba(36,87,245,.35)}
+  .stp.lock{opacity:.55;cursor:not-allowed}
+  .stpline{height:2px;width:22px;border-radius:2px;background:#eef1f6;flex:none}
+  .stpline.on{background:#bcd0ff}
+
+  /* ---- 加载遮罩 ---- */
+  #load{position:fixed;inset:0;z-index:120;display:none;place-items:center;background:rgba(10,16,33,.34);backdrop-filter:blur(4px)}
+  #load.on{display:grid;animation:fadeIn .2s ease}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .spin{height:34px;width:34px;border-radius:999px;border:3px solid #dbe4f5;border-top-color:#2457F5;animation:spin .8s linear infinite;margin:0 auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .prog{height:3px;border-radius:2px;background:#e8ecf3;overflow:hidden;position:relative}
+  .prog::after{content:'';position:absolute;left:-40%;top:0;height:100%;width:40%;background:linear-gradient(90deg,transparent,#2457F5,transparent);animation:slide 1s ease-in-out infinite}
+  @keyframes slide{to{left:110%}}
+
+  /* ---- toast ---- */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);z-index:130;opacity:0;pointer-events:none;transition:all .3s cubic-bezier(.22,.61,.36,1)}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .ring-pulse{animation:ringPulse 1.4s ease-in-out infinite}
+  @keyframes ringPulse{0%,100%{box-shadow:0 10px 30px rgba(36,87,245,.14)}50%{box-shadow:0 0 0 6px rgba(36,87,245,.18)}}
+  :focus-visible{outline:3px solid rgba(36,87,245,.28);outline-offset:2px}
+  @media(max-width:1100px){
+    #app{padding-left:16px;padding-right:16px}
+    #screen-home>div>div.grid{grid-template-columns:220px minmax(0,1fr)}
+    #screen-interview>div>div.grid{grid-template-columns:220px minmax(0,1fr) 260px}
+    #wsGrid{grid-template-columns:46px minmax(0,1fr) 248px!important}
+  }
+  @media(max-width:820px){
+    header>div{height:auto!important;min-height:56px;padding-top:10px;padding-bottom:10px}
+    #stepper{display:none!important}
+    #screen-home>div>div.grid,#screen-interview>div>div.grid,#screen-deliver>div>div.grid{grid-template-columns:1fr}
+    #screen-home aside{display:none}
+    #screen-interview aside{border:0;border-bottom:1px solid #eef1f6}
+    #screen-interview aside:last-child{border-top:1px solid #eef1f6;border-bottom:0}
+    #wsGrid{grid-template-columns:1fr!important}
+    #wsGrid>aside{display:none}
+    #wsGrid>div{padding:20px}
+  }
+  @media(max-width:520px){
+    #app{padding-inline:12px}
+    #t2>.grid-cols-2{grid-template-columns:1fr}
+    .summary-card .grid{grid-template-columns:1fr}
+    .action-callout{align-items:flex-start;flex-direction:column;gap:12px}
+    .action-callout button{width:100%}
+  }
+  body:has(#screen-login.active)>header{display:none}
+  body:has(#screen-login.active){background:#050912}
+  body:has(#screen-login.active)>#app{padding-top:0}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+  /* ===== 全屏 webapp 布局：内容充满整个窗口 ===== */
+  .screen>.card{border-radius:0;border:0;box-shadow:none;overflow:hidden}
+  #screen-home>.card>.grid,#screen-interview>.card>.grid,#screen-deliver>.card>.grid{min-height:calc(100vh - 4rem)}
+  #screen-login #heroWrap,#screen-login #heroWrap>.relative{min-height:100vh!important}
+  #screen-home aside{min-height:calc(100vh - 4rem)!important}
+  /* ===== 工作台：NotebookLM 式三栏，两侧固定、中间独立滚动 ===== */
+  #screen-workspace>.card{height:calc(100vh - 4rem);display:flex;flex-direction:column;overflow:hidden}
+  #wsGrid{flex:1;min-height:0}
+  #wsGrid>aside{height:100%;overflow-y:auto;min-height:0!important}
+  #wsGrid>div{height:100%;overflow-y:auto;min-height:0;scrollbar-width:thin;scrollbar-color:#c7d0de transparent}
+  #wsGrid>div::-webkit-scrollbar{width:12px}
+  #wsGrid>div::-webkit-scrollbar-thumb{background:#d3dae6;border-radius:8px;border:3px solid #fff;background-clip:padding-box}
+  #wsGrid>div::-webkit-scrollbar-thumb:hover{background:#b9c3d4;background-clip:padding-box}
+  #wsGrid>aside::-webkit-scrollbar{width:0}
+</style>
+</head>
+<body class="font-sans">
+
+<!-- 过渡：清明白场 -->
+<div id="flash" class="fixed inset-0 z-[110] bg-white pointer-events-none" style="opacity:0;transition:opacity .28s ease"></div>
+
+<!-- 顶部应用栏 + 步骤条 -->
+<header class="glass sticky top-0 z-50 border-b border-[#eef1f6]">
+  <div class="px-6 h-16 flex items-center gap-4">
+    <div class="flex items-center gap-3 shrink-0">
+      <div class="h-8 w-8 rounded-xl bg-brand flex items-center justify-center shadow-lift"><div class="h-3 w-3 rounded-sm bg-white"></div></div>
+      <div class="leading-tight">
+        <div class="text-[13px] font-extrabold tracking-tight">TOWARD YOURSELF</div>
+        <div class="text-[11px] text-slate-400 -mt-0.5">人岗匹配助手</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main id="app" class="w-full">
+
+  <!-- ===================== 01 登录页 · 宇宙星系 hero ===================== -->
+  <section id="screen-login" class="screen active">
+    <div class="card overflow-hidden">
+      <div id="heroWrap" class="relative" style="min-height:680px;background:radial-gradient(120% 95% at 50% 125%,#173079 0%,#0a1533 46%,#050912 100%)">
+        <canvas id="galaxy" class="absolute inset-0 block h-full w-full"></canvas>
+        <div class="hero-vignette absolute inset-0 pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col" style="min-height:680px">
+          <div class="flex items-center gap-3 px-8 pt-8">
+            <div class="h-9 w-9 rounded-xl bg-brand flex items-center justify-center shadow-lift"><div class="h-3.5 w-3.5 rounded-sm bg-white"></div></div>
+            <div><div class="font-bold tracking-tight text-white text-[15px]">TOWARD YOURSELF</div><div class="text-[11px] tracking-[.12em] text-white/50 mt-0.5">EVIDENCE-BASED CAREER WORKSPACE</div></div>
+          </div>
+          <div class="flex-1 grid place-items-center px-6 pb-14 text-center">
+            <div class="hero-reading w-full max-w-[600px]">
+              <a class="strategy-film-link" href="/media/projection-strategy.html" target="_blank" rel="noopener" aria-label="在新标签页查看建议生成方式">了解建议生成方式 <span class="strategy-label">产品说明</span><span aria-hidden="true">↗</span></a>
+              <h1 class="hero-heading text-white text-balance">让每段经历<br><span style="background:linear-gradient(92deg,#8fb4ff,#ffffff);-webkit-background-clip:text;background-clip:text;color:transparent">指向职业方向</span></h1>
+              <div class="mt-[122px] mx-auto w-full max-w-[420px] text-left">
+                <label for="loginEmail" class="block text-[13px] font-medium text-white/60 mb-2.5">校园邮箱</label>
+                <input id="loginEmail" type="email" class="login-field w-full h-14 rounded-xl px-4 text-white placeholder:text-white/30 text-[16px] outline-none focus:border-brand fade-move" placeholder="you@campus.edu.cn" value="haoyu@campus.edu.cn" />
+                <button id="loginBtn" onclick="doLogin(this)" class="mt-3.5 w-full h-14 rounded-xl bg-brand text-white text-[16px] font-semibold shadow-lift hover:bg-brand-700 press">发送安全登录链接 →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 02 首页 ===================== -->
+  <section id="screen-home" class="screen">
+    <div class="card overflow-hidden">
+      <div class="grid grid-cols-[248px_1fr]">
+        <aside class="border-r border-white/10 p-4 min-h-[600px]" style="background:linear-gradient(180deg,#10182d 0%,#0a1020 100%)">
+          <div class="mt-1 flex items-center justify-between">
+            <span class="text-[12px] font-bold text-white/50">资料库</span>
+            <div class="flex items-center gap-1 text-white/45">
+              <button onclick="collapseAllGroups('screen-home')" title="折叠全部" class="h-7 w-7 grid place-items-center rounded-lg hover:bg-white/10 press"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg></button>
+              <button title="新建" class="h-7 w-7 grid place-items-center rounded-lg hover:bg-white/10 press"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg></button>
+            </div>
+          </div>
+          <div class="mt-2 space-y-1 text-[13px] text-white/80">
+            <button onclick="toggleGroup(this)" data-open="1" class="w-full flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 press">
+              <svg class="caret open h-3.5 w-3.5 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+              <span class="font-semibold">个人库</span><span class="ml-auto text-[11px] text-white/40">4</span>
+            </button>
+            <div class="grp pl-3 space-y-0.5">
+              <a onclick="selectFile(this,'杨浩宇_简历.pdf')" class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>杨浩宇_简历.pdf</a>
+              <a onclick="selectFile(this,'乡村更新调研报告')" class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>乡村更新调研报告</a>
+              <a onclick="selectFile(this,'AI 校园助手项目')" class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>AI 校园助手项目</a>
+              <a onclick="selectFile(this,'首次采访记录')" class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>首次采访记录 <span class="ml-auto rounded-md text-[10px] px-1.5 py-0.5 font-bold" style="color:#ffd873;background:rgba(240,199,80,.14);border:1px solid rgba(240,199,80,.3)">新</span></a>
+            </div>
+            <button onclick="toggleGroup(this)" data-open="0" class="w-full flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 press mt-1">
+              <svg class="caret h-3.5 w-3.5 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+              <span class="font-semibold">JD 库</span><span class="ml-auto text-[11px] text-white/40">3</span>
+            </button>
+            <div class="grp hidden pl-3 space-y-0.5">
+              <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>用户研究员 · 校招</a>
+              <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>产品运营 · 校招</a>
+              <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>社区运营 · 校招</a>
+            </div>
+            <button onclick="toggleGroup(this)" data-open="0" class="w-full flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 press mt-1">
+              <svg class="caret h-3.5 w-3.5 text-white/45" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+              <span class="font-semibold">简历成果库</span><span class="ml-auto text-[11px] text-white/40">3</span>
+            </button>
+            <div class="grp hidden pl-3 space-y-0.5">
+              <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>用户研究员简历 v2</a>
+              <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>面试逐字稿</a>
+              <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-white/10 text-white/65 fade-move cursor-pointer"><svg class="h-4 w-4 text-white/35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>能力画像导出</a>
+            </div>
+          </div>
+          <div class="mt-5 text-[11px] font-bold text-white/40 tracking-wide">最近工作台</div>
+          <nav class="mt-2 space-y-1 text-[13px]">
+            <a class="block px-3 py-2 rounded-lg font-medium fade-move truncate text-white" style="background:rgba(36,87,245,.28)">用户研究方向 · 定向进行中</a>
+            <a class="block px-3 py-2 rounded-lg hover:bg-white/5 text-white/60 fade-move truncate cursor-pointer">产品运营岗 · 已交付</a>
+            <a class="block px-3 py-2 rounded-lg hover:bg-white/5 text-white/40 fade-move truncate cursor-pointer">社区运营 · 草稿</a>
+          </nav>
+        </aside>
+
+        <div class="home-main p-10">
+          <div class="max-w-[720px] mx-auto">
+            <h2 class="text-[30px] font-bold tracking-[-.035em] text-white text-balance">从资料一键上传开始</h2>
+            <p class="text-slate-400 text-[14px] mt-2 leading-relaxed">上传资料或粘贴文字，确认分类后即可生成个人画像与岗位方向。</p>
+          </div>
+          <div class="max-w-[720px] mx-auto mt-6 space-y-4">
+            <!-- 1 · 拖拽上传区（唯一有线框的区域） -->
+            <div class="home-composer rounded-[26px] px-5 py-5">
+              <textarea class="w-full bg-transparent outline-none text-[15px] leading-relaxed resize-none text-white placeholder:text-slate-500" rows="3" placeholder="拖拽文件到这里，或粘贴一段项目经历、简历内容、目标岗位 JD…">大三，主导校园 AI 助手从 0 到 1，做过乡村更新用户调研；想去互联网做用户研究 / 产品，base 杭州。</textarea>
+              <div class="flex gap-2 mt-2.5 text-[12px]">
+                <span onclick="toast('已选择本地文件（示例）')" class="composer-action rounded-full px-3 py-1.5 press cursor-pointer inline-flex items-center gap-1.5"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 12.5 12 21a5 5 0 0 1-7-7l9-9a3.5 3.5 0 0 1 5 5l-9 9a1.9 1.9 0 0 1-3-3l8-8"/></svg>上传文件</span>
+                <span onclick="toast('已粘贴 JD 链接（示例）')" class="composer-action rounded-full px-3 py-1.5 press cursor-pointer inline-flex items-center gap-1.5"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>JD 链接</span>
+              </div>
+            </div>
+
+            <!-- 2 · 资料确认 pill（脱离线框，小字、克制） -->
+            <div>
+              <div class="flex items-center justify-between mb-2 px-1">
+                <span class="text-[10px] font-semibold tracking-[.08em] text-slate-500 uppercase">资料确认</span>
+                <span id="classificationCount" class="text-[10px] text-slate-500">4 项 · 1 项待确认</span>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                <label class="material-pill"><span class="dot"></span><select class="material-type-select" onchange="changeMaterialType(this)"><option value="personal" selected>个人资料</option><option value="jd">目标 JD</option><option value="preference">个人偏好</option></select><span>校园 AI 助手项目</span></label>
+                <label class="material-pill"><span class="dot"></span><select class="material-type-select" onchange="changeMaterialType(this)"><option value="personal" selected>个人资料</option><option value="jd">目标 JD</option><option value="preference">个人偏好</option></select><span>乡村更新调研报告</span></label>
+                <label class="material-pill"><span class="dot"></span><select class="material-type-select" onchange="changeMaterialType(this)"><option value="personal">个人资料</option><option value="jd" selected>目标 JD</option><option value="preference">个人偏好</option></select><span>用户研究员校招</span></label>
+                <label id="uncertainPill" class="material-pill pending"><span class="dot"></span><select class="material-type-select" onchange="changeMaterialType(this)"><option value="unknown" selected>待确认</option><option value="personal">个人资料</option><option value="jd">目标 JD</option><option value="preference">个人偏好</option></select><span>base 杭州</span></label>
+              </div>
+            </div>
+
+            <!-- 3 · 提交与授权（脱离线框，位于最下方） -->
+            <div class="pt-1">
+              <label id="consentRow" class="consent-row flex items-start gap-2 rounded-xl px-1 py-1 text-[11px] leading-relaxed cursor-pointer"><input id="consentCheck" type="checkbox" class="mt-0.5 accent-brand" onchange="setConsent(this.checked)"><span>我已确认资料类型，并同意系统分析。岗位描述只进入 JD 库，不作为个人能力证据。</span></label>
+              <div class="flex items-center justify-between mt-3">
+                <p id="parseHint" class="text-[11px] text-slate-500" aria-live="polite">还需确认 1 项分类并完成授权。</p>
+                <button id="parseBtn" onclick="doParse()" class="h-10 px-5 rounded-xl bg-brand text-white text-[13px] font-semibold shadow-lift hover:bg-brand-700 press shrink-0">确认提交 →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 03 访谈页 ===================== -->
+  <section id="screen-interview" class="screen">
+    <div class="card overflow-hidden">
+      <div class="h-10 flex items-center gap-2 px-4 border-b border-[#eef1f6] bg-[#fbfcfe]">
+        <span class="h-2.5 w-2.5 rounded-full bg-[#e8ecf3]"></span><span class="h-2.5 w-2.5 rounded-full bg-[#e8ecf3]"></span><span class="h-2.5 w-2.5 rounded-full bg-[#e8ecf3]"></span>
+        <div class="ml-3 chip bg-white px-3 py-1 text-[11px] text-slate-400">app.towardyourself.ai / interview</div>
+      </div>
+      <div class="grid grid-cols-[220px_1fr_280px] min-h-[540px]">
+        <aside class="border-r border-[#eef1f6] p-4 bg-[#fbfcfe]">
+          <div class="text-[12px] font-bold text-slate-500">后台处理进度</div>
+          <div class="mt-3 space-y-3 text-[12.5px] relative">
+            <div class="flex gap-3 items-start relative step-line"><span class="mt-0.5 h-[22px] w-[22px] rounded-full bg-brand text-white text-[11px] grid place-items-center z-10">✓</span><div><div class="font-medium">解析建档</div><div class="text-slate-400 text-[11px]">实体与原子事实已入库</div></div></div>
+            <div class="flex gap-3 items-start relative step-line"><span class="mt-0.5 h-[22px] w-[22px] rounded-full bg-brand text-white text-[11px] grid place-items-center z-10">✓</span><div><div class="font-medium">低置信核实</div><div class="text-slate-400 text-[11px]">2 项待你确认</div></div></div>
+            <div class="flex gap-3 items-start relative"><span class="mt-0.5 h-[22px] w-[22px] rounded-full bg-brand-50 text-brand-700 text-[11px] grid place-items-center z-10 ring-2 ring-brand animate-pulse">3</span><div><div class="font-medium text-brand-700">结构化访谈中</div><div class="text-slate-400 text-[11px]">补足意愿 / 偏好 / 外部条件</div></div></div>
+          </div>
+          <div class="mt-6 text-[12px] font-bold text-slate-500">必答进度</div>
+          <div class="mt-2 h-2 rounded-full bg-slate-100 overflow-hidden"><div id="ivBar" class="h-full bg-brand rounded-full transition-all duration-500" style="width:75%"></div></div>
+          <div id="ivLabel" class="text-[11px] text-slate-400 mt-1.5">6 / 8 已完成 · 已自动保存</div>
+          <div class="mt-5 rounded-xl border border-gate/50 bg-gate/10 p-3 text-[12px] leading-relaxed" style="color:#8a5d00">修改早前回答，会让下游“画像 / 定向”标记为待重算。</div>
+        </aside>
+        <div class="p-8 flex flex-col wash-interview">
+          <div id="ivKicker" class="chip bg-brand-50 text-brand-700 px-3 py-1 text-[12px] font-medium w-max">核实冲突点 · 第 6 题</div>
+          <h3 id="ivTitle" class="text-[22px] font-bold mt-4 leading-snug max-w-lg text-balance">请选择你在校园 AI 助手中的实际负责范围</h3>
+          <p id="ivDesc" class="text-slate-500 text-[13px] mt-2 max-w-lg leading-relaxed">你的选择只用于判断职责范围和岗位方向，不代表能力高低。</p>
+          <div id="ivOptions" class="mt-5 space-y-2 max-w-lg"></div>
+          <div id="ivFollow" class="mt-4 max-w-lg"></div>
+          <div class="mt-auto flex items-center justify-between pt-6 gap-3">
+            <button onclick="setScreen('home')" class="chip bg-white px-4 h-10 text-[13px] text-slate-500 hover:border-brand press">退出并稍后继续</button>
+            <div class="flex items-center gap-3 ml-auto">
+            <button onclick="prevQuestion()" class="chip bg-white px-4 h-10 text-[13px] text-slate-500 hover:border-brand press">← 返回上一题</button>
+            <button onclick="nextQuestion(this)" class="h-10 px-6 rounded-xl bg-brand text-white text-[13px] font-semibold shadow-lift hover:bg-brand-700 press">保存并继续 →</button>
+            </div>
+          </div>
+        </div>
+        <aside class="border-l border-[#eef1f6] p-5 bg-[#fbfcfe]">
+          <div class="flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-gate"></span><span class="text-[12px] font-bold" style="color:#8a5d00">匹配策略确认</span></div>
+          <div class="mt-4 space-y-3">
+            <div><div class="text-[11px] text-slate-400">岗位偏好</div><input class="mt-1 w-full editable h-9 px-3 text-[13px]" value="用户研究 / 产品"></div>
+            <div><div class="text-[11px] text-slate-400">城市</div><input class="mt-1 w-full editable h-9 px-3 text-[13px]" value="杭州（可扩到上海）"></div>
+            <div><div class="text-[11px] text-slate-400">薪资口径</div><input class="mt-1 w-full editable h-9 px-3 text-[13px]" value="校招 15–20k · 月薪"></div>
+            <div class="flex items-center justify-between hair rounded-lg h-9 px-3 bg-white"><span class="text-[13px]">是否扩大地域</span><span class="chip bg-brand-50 text-brand-700 px-2 py-0.5 text-[11px]">是</span></div>
+          </div>
+          <button id="ivConfirm" onclick="doConfirmStrategy()" class="mt-5 w-full h-10 rounded-xl bg-brand text-white text-[13px] font-semibold shadow-lift hover:bg-brand-700 press">确认策略，进入定向</button>
+          <p class="text-[11px] text-slate-400 mt-2 text-center">未确认前不会进入岗位定向</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 04 工作台 ===================== -->
+  <section id="screen-workspace" class="screen">
+    <div class="card overflow-hidden">
+      <div id="wsGrid" class="grid" style="grid-template-columns:248px minmax(0,1fr) 268px">
+
+        <!-- 左：资料库（可折叠） -->
+        <aside class="border-r border-[#eef1f6] bg-[#fbfcfe] min-h-[660px]">
+          <div id="wsLeftFull" class="p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-[12px] font-bold text-slate-500">资料库</span>
+              <div class="flex items-center gap-1 text-slate-400">
+                <button onclick="toggleLeft()" title="折叠" class="h-7 w-7 grid place-items-center rounded-lg hover:bg-slate-100 press"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg></button>
+                <button title="新建" class="h-7 w-7 grid place-items-center rounded-lg hover:bg-slate-100 press"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg></button>
+              </div>
+            </div>
+            <div class="mt-3 space-y-1 text-[13px]">
+              <button onclick="toggleGroup(this)" data-open="1" class="w-full flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 press">
+                <svg class="caret open h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                <span class="font-semibold">个人库</span><span class="ml-auto text-[11px] text-slate-400">4</span>
+              </button>
+              <div class="grp pl-3 space-y-0.5">
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>杨浩宇_简历.pdf</a>
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>乡村更新调研报告</a>
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg bg-brand-50 text-brand-700 fade-move cursor-pointer"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>AI 校园助手项目</a>
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>首次采访记录 <span class="ml-auto chip bg-gate/20 text-[10px] px-1.5 py-0.5 font-bold" style="color:#8a5d00;border-color:#f0dfa6">新</span></a>
+              </div>
+              <button onclick="toggleGroup(this)" data-open="0" class="w-full flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 press mt-1">
+                <svg class="caret h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                <span class="font-semibold">JD 库</span><span class="ml-auto text-[11px] text-slate-400">3</span>
+              </button>
+              <div class="grp hidden pl-3 space-y-0.5">
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>用户研究员 · 校招</a>
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>产品运营 · 校招</a>
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>社区运营 · 校招</a>
+              </div>
+              <button onclick="toggleGroup(this)" data-open="0" class="w-full flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 press mt-1">
+                <svg class="caret h-3.5 w-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg>
+                <span class="font-semibold">简历成果库</span><span class="ml-auto text-[11px] text-slate-400">3</span>
+              </button>
+              <div class="grp hidden pl-3 space-y-0.5">
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>用户研究员简历 v2</a>
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>面试逐字稿</a>
+                <a class="flex items-center gap-2 px-2 h-8 rounded-lg hover:bg-slate-100 text-slate-600 fade-move cursor-pointer"><svg class="h-4 w-4 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>能力画像导出</a>
+              </div>
+            </div>
+            <div class="mt-6 rounded-xl bg-white hair p-3 text-[11px] text-slate-400 leading-relaxed">JD 永不进入个人画像；事实保留来源与置信度。</div>
+          </div>
+          <div id="wsLeftRail" class="hidden py-4 flex flex-col items-center gap-3">
+            <button onclick="toggleLeft()" title="展开" class="h-7 w-7 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-400 press"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg></button>
+            <div class="[writing-mode:vertical-rl] text-[11px] tracking-[.2em] text-slate-400">资料库</div>
+          </div>
+        </aside>
+
+        <!-- 中：内容 -->
+        <div class="p-6">
+          <div class="inline-flex p-1 rounded-full bg-slate-100 text-[13px]">
+            <button data-tab="t1" class="ws-tab px-4 h-9 rounded-full font-medium press bg-white text-brand-700 shadow-sm">现状分析</button>
+            <button data-tab="t2" class="ws-tab px-4 h-9 rounded-full font-medium press text-slate-500">对比定向</button>
+            <button data-tab="t3" class="ws-tab px-4 h-9 rounded-full font-medium press text-slate-500">情境择岗</button>
+          </div>
+
+          <!-- 现状分析 = 个人画像 + 经历拆解 -->
+          <div id="t1" class="ws-panel mt-6">
+            <div>
+              <h3 class="text-[22px] font-extrabold">看清你的能力优势</h3>
+              <p class="text-slate-500 text-[13px] mt-1 leading-relaxed">根据已确认的经历，归纳你的工作方式、核心能力与发展偏好。</p>
+            </div>
+
+            <div class="card p-6 mt-4 grad-blue">
+              <div class="flex gap-5 items-start">
+                <div class="h-14 w-14 rounded-full bg-brand text-white grid place-items-center text-[20px] font-bold shrink-0">杨</div>
+                <div>
+                  <span class="chip bg-brand-50 text-brand-700 px-2.5 py-0.5 text-[11px] font-medium">能力总结</span>
+                  <div class="text-[22px] font-extrabold mt-2 leading-snug text-balance">把模糊问题整理成可验证方案的跨学科实践者</div>
+                  <p class="text-slate-500 text-[13px] mt-2 leading-relaxed">先看整体结论，再通过下方经历核对每项能力的证据。</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-4 mt-5">
+                <div class="rounded-2xl bg-white/85 hair p-4">
+                  <div class="text-[12px] font-bold text-slate-700">核心能力</div>
+                  <div class="flex flex-wrap gap-1.5 mt-2.5">
+                    <span class="tag brand">问题结构化</span>
+                    <span class="tag brand">用户研究</span>
+                    <span class="tag brand">方案验证</span>
+                    <span class="tag brand">跨角色协作</span>
+                  </div>
+                </div>
+                <div class="rounded-2xl bg-white/85 hair p-4">
+                  <div class="text-[12px] font-bold text-slate-700">工作偏好</div>
+                  <ul class="mt-2.5 space-y-1.5 text-[12.5px] text-slate-500 leading-relaxed">
+                    <li>面对模糊问题时先建立框架</li>
+                    <li>出现分歧时先拆解问题并对齐目标</li>
+                    <li>偏好探索、整合与推进型任务</li>
+                  </ul>
+                </div>
+                <div class="rounded-2xl bg-white/85 hair p-4">
+                  <div class="text-[12px] font-bold text-slate-700">性格特质</div>
+                  <div class="flex flex-wrap gap-1.5 mt-2.5">
+                    <span class="tag">好奇驱动</span>
+                    <span class="tag">反思复盘</span>
+                    <span class="tag">稳态推进</span>
+                    <span class="tag">低调坚持</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-end justify-between mt-6">
+              <div>
+                <div class="text-[11px] font-bold tracking-[.16em] text-slate-400">EXPERIENCE BREAKDOWN</div>
+                <h3 class="text-[18px] font-bold mt-1">经历拆解</h3>
+                <p class="text-[12px] text-slate-400 mt-0.5 leading-relaxed">逐条把经历还原为证据 · 富文本可编辑 · 与画像共同构成现状分析</p>
+              </div>
+              <span class="text-[12px] text-slate-400">按时间倒序 · 2 段</span>
+            </div>
+
+            <div class="card p-5 mt-3">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2"><span class="chip bg-brand-50 text-brand-700 px-2 py-0.5 text-[11px]">信息完整</span><span class="text-[15px] font-bold">校园 AI 助手</span></div>
+                  <div class="text-[12px] text-slate-400 mt-0.5">校园项目 · 项目负责人 · 2025.03—2025.06</div>
+                </div>
+                <button onclick="toast('已进入编辑：可直接修改证据字段')" class="chip bg-white px-3 h-8 text-[12px] text-brand-700 border-brand-100 hover:bg-brand-50 press inline-flex items-center gap-1.5"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>补充 / 纠正</button>
+              </div>
+              <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-4 text-[12.5px]">
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">背景</div><div class="rt" contenteditable="true">同学找不到分散的校园信息</div></div>
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">目标</div><div class="rt" contenteditable="true">做一个能问答的校园助手</div></div>
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">行动</div><div class="rt" contenteditable="true">主导需求访谈与信息架构，组织 3 人小组分工</div></div>
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">结果</div><div class="rt" contenteditable="true">内测 200+ 用户，问题解决率 76%</div></div>
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">复用</div><div class="rt" contenteditable="true">问题结构化 · 跨角色协作</div></div>
+              </div>
+            </div>
+
+            <div class="card p-5 mt-3">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2"><span class="chip px-2 py-0.5 text-[11px]" style="background:#fdf9ec;border-color:#f0dfa6;color:#9a6a00">待补充 1 项</span><span class="text-[15px] font-bold">乡村更新调研</span></div>
+                  <div class="text-[12px] text-slate-400 mt-0.5">社会实践 · 调研执行 · 2024.07—2024.08</div>
+                </div>
+                <button onclick="toast('已进入编辑：可补齐量化结果')" class="chip bg-white px-3 h-8 text-[12px] text-brand-700 border-brand-100 hover:bg-brand-50 press inline-flex items-center gap-1.5"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>补充 / 纠正</button>
+              </div>
+              <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 mt-4 text-[12.5px]">
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">背景</div><div class="rt" contenteditable="true">乡镇公共空间闲置</div></div>
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">目标</div><div class="rt" contenteditable="true">找出可激活的使用场景</div></div>
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">行动</div><div class="rt" contenteditable="true">设计访谈提纲，走访 18 户并整理证据</div></div>
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">结果</div><div class="rt todo" contenteditable="true">待补充量化结果…</div></div>
+                <div><div class="text-[11px] font-bold text-slate-400 mb-1">复用</div><div class="rt" contenteditable="true">用户研究 · 方案验证</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 对比定向 -->
+          <div id="t2" class="ws-panel mt-6 hidden">
+            <div>
+              <h3 class="text-[22px] font-extrabold">找到适合你的方向</h3>
+              <p class="text-slate-500 text-[13px] mt-1 leading-relaxed">结合能力证据与岗位职责，明确优先方向、成长机会和暂不建议投入的方向。</p>
+            </div>
+            <div class="card p-6 mt-4 grad-blue">
+              <div class="flex gap-5 items-start">
+                <div class="h-14 w-14 rounded-full bg-brand text-white grid place-items-center shrink-0"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="5"/><path d="M12 9l1.5 3L12 15l-1.5-3z" fill="currentColor" stroke="none"/></svg></div>
+                <div>
+                  <span class="chip bg-brand-50 text-brand-700 px-2.5 py-0.5 text-[11px] font-medium">方向总结</span>
+                  <div class="text-[22px] font-extrabold mt-2 leading-snug text-balance">优先考虑用户研究与产品运营</div>
+                  <p class="text-slate-500 text-[13px] mt-2 leading-relaxed max-w-[62ch]">你的用户研究与问题结构化能力已有充分证据，可直接迁移到用户研究、产品运营岗位；定量研究和数据分析是下一阶段的重点补强项。</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-4 mt-5">
+                <div class="rounded-2xl bg-white/85 hair p-4"><div class="text-[11px] font-bold text-slate-400">优先方向</div><div class="text-[15px] font-bold text-slate-800 mt-1">用户研究</div></div>
+                <div class="rounded-2xl bg-white/85 hair p-4"><div class="text-[11px] font-bold text-slate-400">可拓展方向</div><div class="text-[15px] font-bold text-slate-800 mt-1">产品运营</div></div>
+                <div class="rounded-2xl bg-white/85 hair p-4"><div class="text-[11px] font-bold text-slate-400">重点补强</div><div class="text-[15px] font-bold text-slate-800 mt-1">定量研究</div></div>
+              </div>
+            </div>
+            <div class="mt-5">
+              <h3 class="text-[15px] font-bold">方案明细</h3>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-3">
+              <div class="card category-card advantage p-4"><div class="flex items-center gap-2 text-[12px] font-bold" style="color:#166b58"><span aria-hidden="true">✓</span>优先方向 · 能力证据充分</div>
+                <div class="mt-2 space-y-1 text-[13px]">
+                  <div class="flex items-center gap-2 rounded-lg px-2 h-9 hover:bg-white/70 fade-move"><label class="flex items-center gap-2 flex-1 cursor-pointer"><input type="checkbox" class="g2 accent-brand" checked>用户研究员</label><button onclick="openJD('用户研究员')" class="chip bg-white px-2.5 h-7 text-[11px] font-medium text-brand-700 border-brand-100 hover:bg-brand-50 press">查看职责</button></div>
+                  <div class="flex items-center gap-2 rounded-lg px-2 h-9 hover:bg-white/70 fade-move"><label class="flex items-center gap-2 flex-1 cursor-pointer"><input type="checkbox" class="g2 accent-brand" checked>产品运营</label><button onclick="openJD('产品运营')" class="chip bg-white px-2.5 h-7 text-[11px] font-medium text-brand-700 border-brand-100 hover:bg-brand-50 press">查看职责</button></div>
+                </div>
+              </div>
+              <div class="card category-card growth p-4"><div class="flex items-center gap-2 text-[12px] font-bold" style="color:#8a5d00"><span aria-hidden="true">↑</span>成长方向 · 补强后更匹配</div>
+                <div class="mt-2 space-y-1 text-[13px]">
+                  <div class="flex items-center gap-2 rounded-lg px-2 h-9 hover:bg-white/70 fade-move"><label class="flex items-center gap-2 flex-1 cursor-pointer"><input type="checkbox" class="g2 accent-brand" checked>社区产品运营</label><button onclick="openJD('社区产品运营')" class="chip bg-white px-2.5 h-7 text-[11px] font-medium text-brand-700 border-brand-100 hover:bg-brand-50 press">查看职责</button></div>
+                  <div class="flex items-center gap-2 rounded-lg px-2 h-9 hover:bg-white/70 fade-move"><label class="flex items-center gap-2 flex-1 cursor-pointer"><input type="checkbox" class="g2 accent-brand">数据产品经理</label><button onclick="openJD('数据产品经理')" class="chip bg-white px-2.5 h-7 text-[11px] font-medium text-brand-700 border-brand-100 hover:bg-brand-50 press">查看职责</button></div>
+                </div>
+              </div>
+              <div class="card category-card observe p-4"><div class="flex items-center gap-2 text-[12px] font-bold text-slate-600"><span aria-hidden="true">○</span>观察方向 · 证据仍不足</div>
+                <div class="mt-2 space-y-1 text-[13px] text-slate-500">
+                  <div class="flex items-center gap-2 rounded-lg px-2 h-9 hover:bg-white/70 fade-move"><label class="flex items-center gap-2 flex-1 cursor-pointer"><input type="checkbox" class="g2 accent-brand">商业分析师</label><button onclick="openJD('商业分析师')" class="chip bg-white px-2.5 h-7 text-[11px] font-medium text-brand-700 border-brand-100 hover:bg-brand-50 press">查看职责</button></div>
+                </div>
+              </div>
+              <div class="card category-card blocked p-4"><div class="flex items-center gap-2 text-[12px] font-bold" style="color:#b3271e"><span aria-hidden="true">×</span>暂缓方向 · 硬条件不符</div>
+                <div class="mt-2 space-y-1 text-[13px] text-slate-400">
+                  <div class="flex items-center gap-2 rounded-lg px-2 h-9"><label class="flex items-center gap-2 flex-1 line-through"><input type="checkbox" class="accent-brand" disabled>算法工程师（需硕士）</label><button onclick="openJD('算法工程师')" class="chip bg-white px-2.5 h-7 text-[11px] font-medium text-slate-500 press">查看职责</button></div>
+                </div>
+              </div>
+            </div>
+            <div class="card p-4 mt-4"><div class="text-[12px] font-bold text-slate-700">能力补强清单</div>
+              <div class="flex flex-wrap gap-2 mt-2 text-[12px]">
+                <span class="tag">定量研究设计</span>
+                <span class="tag">SQL 数据抽取</span>
+                <span class="tag">指标体系拆解</span>
+              </div>
+            </div>
+            <div class="mt-5 flex items-center justify-between border-t border-[#eef1f6] pt-4">
+              <div class="text-[13px] text-slate-500">已选 <b id="g2count" class="text-slate-800">3</b> 个方向</div>
+              <button onclick="confirmDirections()" class="h-9 px-5 rounded-lg bg-brand text-white text-[13px] font-semibold shadow-lift hover:bg-brand-700 press">比较岗位 →</button>
+            </div>
+          </div>
+
+          <!-- 情境择岗 -->
+          <div id="t3" class="ws-panel mt-6 hidden">
+            <div>
+              <h3 class="text-[22px] font-extrabold">选定更适合的岗位</h3>
+              <p class="text-slate-500 text-[13px] mt-1 leading-relaxed">切换比较重点，查看岗位排序变化和对应原因，再选定目标岗位。</p>
+            </div>
+            <div class="mt-5 sc-tabs">
+              <button data-sc="real" class="sc-btn sc-tab active">现实优先</button>
+              <button data-sc="subj" class="sc-btn sc-tab">主观优先</button>
+              <button data-sc="ext" class="sc-btn sc-tab">外部条件优先</button>
+            </div>
+            <div class="sc-panel">
+              <p id="scDesc" class="text-[12px] text-slate-500 leading-relaxed">现实优先：更看重当前客观能力匹配与可落地性。</p>
+              <div id="jobList" class="divide-y divide-[#eef1f6] overflow-hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右：交付（可折叠） -->
+        <aside class="border-l border-[#eef1f6] bg-[#fbfcfe]">
+          <div id="wsRightFull" class="p-4">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-bold text-slate-400 tracking-wide">目标岗位</span>
+              <button onclick="toggleRight()" title="折叠" class="h-7 w-7 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-400 press"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 6l6 6-6 6"/></svg></button>
+            </div>
+            <div id="targetCard" class="card p-3 mt-2"><div class="text-[13px] font-semibold text-slate-500">等待选择目标岗位</div><div class="text-[11px] text-slate-400 mt-1">先完成岗位比较，再选择一个目标岗位。</div></div>
+            <div class="mt-4 text-[11px] font-bold text-slate-400 tracking-wide">交付物</div>
+            <div class="mt-2 space-y-2 text-[13px]">
+              <div class="flex items-center justify-between hair rounded-lg px-3 h-9 bg-white text-slate-400">定制简历 <span class="text-[11px]">待生成</span></div>
+              <div class="flex items-center justify-between hair rounded-lg px-3 h-9 bg-white text-slate-400">面试逐字稿 <span class="text-[11px]">待生成</span></div>
+            </div>
+            <button id="generateBtn" onclick="doGenerate()" disabled class="mt-4 w-full h-10 rounded-xl bg-brand text-white text-[13px] font-semibold shadow-lift hover:bg-brand-700 press">选定岗位后生成求职材料</button>
+            <div class="mt-4 text-[11px] font-bold text-slate-400 tracking-wide">版本</div>
+            <div class="text-[12px] text-slate-500 mt-1">画像 v4 · 匹配结果 v2</div>
+          </div>
+          <div id="wsRightRail" class="hidden py-4 flex flex-col items-center gap-3">
+            <button onclick="toggleRight()" title="展开" class="h-7 w-7 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-400 press"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 18l-6-6 6-6"/></svg></button>
+            <div class="[writing-mode:vertical-rl] text-[11px] tracking-[.2em] text-slate-400">交付</div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 05 物料交付 ===================== -->
+  <section id="screen-deliver" class="screen">
+    <div class="card overflow-hidden">
+      <div class="h-10 flex items-center gap-2 px-4 border-b border-[#eef1f6] bg-[#fbfcfe]">
+        <span class="h-2.5 w-2.5 rounded-full bg-[#e8ecf3]"></span><span class="h-2.5 w-2.5 rounded-full bg-[#e8ecf3]"></span><span class="h-2.5 w-2.5 rounded-full bg-[#e8ecf3]"></span>
+        <div class="ml-3 chip bg-white px-3 py-1 text-[11px] text-slate-400">app.towardyourself.ai / editor</div>
+      </div>
+      <div class="grid grid-cols-[1fr_320px] min-h-[520px]">
+        <div class="p-6">
+          <div class="inline-flex p-1 rounded-full bg-slate-100 text-[13px]">
+            <button data-dtab="d1" class="d-tab px-4 h-9 rounded-full font-medium press bg-white text-brand-700 shadow-sm">定制简历</button>
+            <button data-dtab="d2" class="d-tab px-4 h-9 rounded-full font-medium press text-slate-500">面试逐字稿</button>
+          </div>
+          <div id="d1" class="d-panel mt-5">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <div class="inline-flex p-1 rounded-xl bg-slate-100 text-[12px]">
+                <button data-rstage="confirm" onclick="switchResumeStage('confirm')" class="resume-stage-btn active px-3 h-8 rounded-lg font-medium">1 · 信息确认</button>
+                <button data-rstage="preview" onclick="switchResumeStage('preview')" class="resume-stage-btn px-3 h-8 rounded-lg font-medium text-slate-500">2 · 简历预览</button>
+              </div>
+              <span id="resumeSaveState" class="text-[11px] text-slate-400">已自动保存 · 刚刚</span>
+            </div>
+
+            <div id="resume-confirm" class="resume-stage-panel">
+              <div class="flex items-start justify-between gap-4 mb-3">
+                <div><h3 class="text-[15px] font-bold">确认简历信息与措辞</h3><p class="text-[12px] text-slate-500 mt-1">编辑只能更新简历草稿；事实仍需通过右侧一致性验收。</p></div>
+                <div class="flex items-center gap-2"><span class="chip bg-brand-50 text-brand-700 px-2.5 py-1 text-[11px]">证据已绑定</span><span class="chip bg-white px-2.5 py-1 text-[11px] text-slate-500">草稿 v3</span></div>
+              </div>
+              <div class="card overflow-hidden">
+                <div class="resume-toolbar flex items-center gap-1 border-b border-slate-100 bg-[#fbfcfe] px-3 py-2" role="toolbar" aria-label="简历富文本工具栏">
+                  <button onclick="formatResume('bold')" title="加粗" class="font-bold">B</button><button onclick="formatResume('italic')" title="斜体" class="italic">I</button><button onclick="formatResume('insertUnorderedList')" title="项目符号">•≡</button><span class="mx-1 h-4 w-px bg-slate-200"></span><button onclick="formatResume('undo')" title="撤销">↶</button><button onclick="formatResume('redo')" title="重做">↷</button>
+                  <span class="ml-auto text-[10px] text-slate-400">支持直接修改与粘贴</span>
+                </div>
+                <div id="resumeEditor" contenteditable="true" spellcheck="false" oninput="markResumeDirty()" class="resume-editor p-6 text-[13px] text-slate-600">
+                  <div class="text-[18px] font-extrabold text-slate-900">杨浩宇 · 应聘 用户研究员</div><div class="text-[12px] text-slate-400">杭州 · haoyu@campus.edu.cn</div>
+                  <div class="mt-4 font-bold text-brand-700">核心优势</div><p>跨学科实践者，擅长把模糊问题结构化并用调研验证；主导校园 AI 助手从 0 到 1，内测问题解决率 76%。</p>
+                  <div class="mt-4 font-bold text-brand-700">项目经历（对齐岗位职责）</div><ul class="list-disc pl-5"><li>主导需求访谈与信息架构，组织 3 人小组分工</li><li>设计访谈提纲走访 18 户，输出被采纳的调研建议</li></ul>
+                </div>
+              </div>
+              <div class="mt-3 flex items-center justify-between"><span class="text-[11px] text-slate-400">每项事实均可回溯来源 · 修改后重新触发一致性检查</span><button onclick="saveResumeDraft()" class="h-9 px-4 rounded-lg bg-brand text-white text-[12px] font-medium">保存并生成预览 →</button></div>
+            </div>
+
+            <div id="resume-preview" class="resume-stage-panel hidden">
+              <div class="flex items-center justify-between gap-3 mb-3">
+                <div><h3 class="text-[15px] font-bold">简历成品预览</h3><p class="text-[12px] text-slate-500 mt-1">已根据确认信息生成，可下载 Word 或 PDF 文件。</p></div>
+                <div class="inline-flex p-1 rounded-lg bg-slate-100 text-[11px]"><button data-format="pdf" onclick="switchPreviewFormat('pdf')" class="preview-format bg-white text-brand-700 shadow-sm rounded-md px-3 h-7">PDF</button><button data-format="word" onclick="switchPreviewFormat('word')" class="preview-format text-slate-500 rounded-md px-3 h-7">Word</button></div>
+              </div>
+              <div class="rounded-2xl border border-slate-200 bg-slate-100/80 overflow-hidden">
+                <div class="h-10 px-3 flex items-center gap-2 border-b border-slate-200 bg-white/80"><span id="previewFileName" class="text-[11px] font-medium text-slate-600">杨浩宇_用户研究员_简历.pdf</span><span class="ml-auto text-[10px] text-slate-400">第 1 / 1 页 · 90%</span><button onclick="toast('已在新窗口打开预览（示例）')" class="chip px-2 py-1 text-[10px] text-slate-500 bg-white">全屏</button></div>
+                <div class="max-h-[500px] overflow-auto p-5 flex justify-center">
+                  <div id="resumePreviewPage" class="resume-page p-8 text-[12px] text-slate-600 leading-relaxed"><div class="text-[20px] font-extrabold text-slate-900">杨浩宇</div><div class="text-[11px] text-slate-400">用户研究员 · 杭州 · haoyu@campus.edu.cn</div><div class="h-px bg-brand mt-4"></div><div class="mt-4 font-bold text-brand-700">核心优势</div><p class="mt-1">跨学科实践者，擅长把模糊问题结构化并用调研验证；主导校园 AI 助手从 0 到 1，内测问题解决率 76%。</p><div class="mt-4 font-bold text-brand-700">项目经历</div><ul class="mt-1 list-disc pl-5"><li>主导需求访谈与信息架构，组织 3 人小组分工</li><li>设计访谈提纲走访 18 户，输出被采纳的调研建议</li></ul></div>
+                </div>
+              </div>
+              <div class="mt-3 flex items-center justify-between"><button onclick="switchResumeStage('confirm')" class="h-9 px-4 rounded-lg border border-slate-200 bg-white text-[12px] text-slate-600">← 返回修改</button><div class="flex gap-2"><button onclick="toast('已提交 Skill 重新生成（示例）')" class="h-9 px-4 rounded-lg border border-slate-200 bg-white text-[12px] text-slate-600">重新生成</button><button onclick="toast('已下载当前格式（示例）')" class="h-9 px-4 rounded-lg bg-brand text-white text-[12px] font-medium">下载成品</button></div></div>
+            </div>
+          </div>
+          <div id="d2" class="d-panel mt-5 hidden">
+            <div class="card p-6 space-y-4 text-[13px]">
+              <div><div class="font-bold text-brand-700">面试题 · 介绍一个你主导的项目</div><p class="text-slate-600 mt-1 leading-relaxed">“我在校园 AI 助手负责需求方向。面对信息分散导致的低效，我先做用户访谈把问题分层……最终内测 200+ 用户、问题解决率 76%。”</p></div>
+              <div><div class="font-bold" style="color:#9a6a00">面试题 · 说明你的能力补强计划</div><p class="text-slate-600 mt-1 leading-relaxed">“系统性定量研究是我的补强项，我正在学习定量研究设计与 SQL……”</p></div>
+            </div>
+          </div>
+        </div>
+        <aside class="border-l border-[#eef1f6] p-5 bg-[#fbfcfe]">
+          <div class="text-[12px] font-bold text-slate-500">一致性验收</div>
+          <div class="mt-3 space-y-2 text-[13px]">
+            <div class="flex items-center justify-between hair rounded-lg px-3 h-10 bg-white"><span>事实与来源一致</span><span class="text-brand-700">✓</span></div>
+            <div class="flex items-center justify-between hair rounded-lg px-3 h-10 bg-white"><span>无编造内容</span><span class="text-brand-700">✓</span></div>
+            <div class="flex items-center justify-between hair rounded-lg px-3 h-10 bg-white"><span>引用可回溯</span><span class="text-brand-700">✓</span></div>
+            <div class="flex items-center justify-between rounded-lg px-3 h-10" style="background:#fdf9ec;border:1px solid #f0dfa6;color:#9a6a00"><span>格式检查</span><span>复核中</span></div>
+          </div>
+          <div class="mt-4 rounded-xl bg-brand-50 border border-brand-100 p-3 text-[12px] text-brand-700 leading-relaxed">全部通过才能完成；最多打回 3 轮，超限转人工复核。</div>
+          <button onclick="doDownload(this)" class="mt-4 w-full h-10 rounded-xl bg-brand text-white text-[13px] font-semibold shadow-lift hover:bg-brand-700 press">通过并下载简历</button>
+          <button onclick="toast('已打回，下游标记为待重算（示例）')" class="mt-2 w-full h-10 rounded-xl bg-white text-[13px] font-medium border border-[#f7cfcd] press" style="color:#b3271e">打回重算</button>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-center text-[12px] text-white/70 pt-8 pb-2 leading-relaxed">TOWARD YOURSELF · 人岗匹配助手产品原型</footer>
+</main>
+
+<!-- 右侧抽屉：JD·Ownership / 差距清单 -->
+<div id="drawer" class="fixed inset-0 z-[95] hidden">
+  <div class="absolute inset-0" style="background:rgba(15,23,42,.4);backdrop-filter:blur(3px)" onclick="closeDrawer()"></div>
+  <aside id="drawerPanel" class="drawer absolute right-0 top-0 h-full w-full max-w-[500px] flex flex-col" style="transform:translateX(100%);background:#F7F8FB">
+    <div class="flex items-start justify-between p-5 border-b border-[#eef1f6] bg-white">
+      <div>
+        <div id="drawerKicker" class="text-[11px] font-bold tracking-[.16em] text-brand-600"></div>
+        <h3 id="drawerTitle" class="text-[18px] font-extrabold mt-1"></h3>
+        <div id="drawerSub" class="text-[12px] text-slate-400 mt-0.5"></div>
+      </div>
+      <button onclick="closeDrawer()" class="h-8 w-8 grid place-items-center rounded-lg hover:bg-slate-100 text-slate-400 press"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div id="drawerBody" class="p-5 overflow-auto"></div>
+  </aside>
+</div>
+
+<!-- 加载遮罩 -->
+<div id="load">
+  <div class="bg-white rounded-2xl shadow-lift px-7 py-6 w-[300px] text-center">
+    <div class="spin"></div>
+    <div id="loadMsg" class="mt-4 text-[14px] font-semibold text-slate-700">处理中…</div>
+    <div id="loadSub" class="mt-1 text-[12px] text-slate-400 leading-relaxed">请稍候</div>
+    <div class="prog mt-4"></div>
+  </div>
+</div>
+
+<!-- toast -->
+<div id="toast" role="status" aria-live="polite"><div class="glass rounded-full px-4 py-2.5 shadow-lift text-[13px] text-slate-700 border border-[#eef1f6] flex items-center gap-2"><span class="h-2 w-2 rounded-full bg-brand"></span><span id="toastMsg"></span></div></div>
+
+<script>
+  /* =========================================================
+     mock run-state · 驱动完整链路
+  ========================================================= */
+  const RUN = {
+    screen:'login',
+    tab:'t1',
+    maxStep:-1,          // 已解锁到的步骤索引
+    authed:false,
+    parsed:false,
+    classificationResolved:false,
+    consent:false,
+    ivIndex:0,
+    ivDone:6,
+    ivTotal:8,
+    directions:3,
+    target:null,
+    scenario:'real',
+    materials:false,
+  };
+
+  const STEPS=[
+    {label:'信息输入', go:()=>setScreen('home')},
+    {label:'现状分析', go:()=>{setScreen('workspace');switchTab('t1');}},
+    {label:'发展定向', go:()=>{setScreen('workspace');switchTab('t2');}},
+    {label:'情境择岗', go:()=>{setScreen('workspace');switchTab('t3');}},
+    {label:'物料交付', go:()=>setScreen('deliver')},
+  ];
+  function currentStepIndex(){
+    if(RUN.screen==='home') return 0;
+    if(RUN.screen==='interview') return 1;
+    if(RUN.screen==='workspace') return {t1:1,t2:2,t3:3}[RUN.tab];
+    if(RUN.screen==='deliver') return 4;
+    return -1;
+  }
+  function syncStepper(){
+    const nav=document.getElementById('stepper');
+    if(!nav) return;
+    const idx=currentStepIndex();
+    nav.style.display = RUN.screen==='login' ? 'none' : 'flex';
+    let html='';
+    STEPS.forEach((s,i)=>{
+      if(i>0) html+=`<span class="stpline ${i<=RUN.maxStep?'on':''}"></span>`;
+      const st = i<idx?'done': i===idx?'cur':'';
+      const lock = i>RUN.maxStep && i!==idx ? 'lock':'';
+      html+=`<div class="stp ${st} ${lock}" onclick="goStep(${i})"><span class="num">${i<idx?'✓':i+1}</span>${s.label}</div>`;
+    });
+    nav.innerHTML=html;
+  }
+  function goStep(i){
+    if(i>RUN.maxStep && i!==currentStepIndex()){ toast('请先完成当前步骤'); return; }
+    STEPS[i].go();
+  }
+  function unlock(i){ if(i>RUN.maxStep) RUN.maxStep=i; }
+
+  /* ---------- 屏幕路由 ---------- */
+  function setScreen(name){
+    RUN.screen=name;
+    document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id==='screen-'+name));
+    window.scrollTo({top:0,behavior:'smooth'});
+    syncStepper();
+    if(name==='login') requestAnimationFrame(resizeGalaxy);
+  }
+  function resetFlow(){
+    window.location.reload();
+  }
+
+  /* ---------- 加载遮罩 / toast / 白场 ---------- */
+  function loading(msg,sub,ms,cb){
+    document.getElementById('loadMsg').textContent=msg;
+    document.getElementById('loadSub').textContent=sub||'请稍候';
+    const l=document.getElementById('load'); l.classList.add('on');
+    setTimeout(()=>{ l.classList.remove('on'); cb&&cb(); }, ms||900);
+  }
+  let toastT=null;
+  function toast(msg){
+    document.getElementById('toastMsg').textContent=msg;
+    const t=document.getElementById('toast'); t.classList.add('on');
+    clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('on'),1800);
+  }
+  function flash(cb){ const f=document.getElementById('flash'); f.style.opacity='1'; setTimeout(()=>{ cb&&cb(); setTimeout(()=>{ f.style.opacity='0'; },90); },300); }
+  function pressLoad(btn,text,ms,cb){
+    const old=btn.innerHTML; btn.disabled=true; btn.style.opacity='.9';
+    btn.innerHTML=`<span class="inline-flex items-center gap-2"><span class="h-4 w-4 rounded-full border-2 border-white/40 border-t-white animate-spin"></span>${text}</span>`;
+    setTimeout(()=>{ btn.disabled=false; btn.style.opacity=''; btn.innerHTML=old; cb&&cb(); }, ms);
+  }
+
+  /* ---------- 链路动作 ---------- */
+  function doLogin(btn){
+    pressLoad(btn,'正在验证登录…',850,()=>{
+      RUN.authed=true; unlock(0);
+      galaxyTravel(()=>setScreen('home'));
+    });
+  }
+  function doParse(){
+    if(!RUN.classificationResolved){ toast('请先通过下拉菜单确认所有资料类型'); document.querySelector('.material-type-select option[value="unknown"]:checked')?.parentElement.focus(); return; }
+    if(!RUN.consent){
+      const row=document.getElementById('consentRow'); const hint=document.getElementById('parseHint');
+      row?.classList.add('is-error'); hint?.classList.add('is-error');
+      if(hint) hint.textContent='请勾选授权后再开始解析。';
+      toast('请先勾选资料解析授权'); document.getElementById('consentCheck')?.focus(); return;
+    }
+    loading('正在解析资料并建档','抽取实体与原子事实，标注置信度…',1200,()=>{
+      RUN.parsed=true; unlock(1); setScreen('interview');
+    });
+  }
+  function doConfirmStrategy(){
+    if(RUN.ivDone<RUN.ivTotal){ toast('请先完成必答题，再确认策略'); return; }
+    loading('正在生成能力画像与岗位定向','对齐证据与岗位职责，构建对比…',1300,()=>{
+      unlock(3); setScreen('workspace'); switchTab('t1');
+    });
+  }
+  function doGenerate(){
+    if(!RUN.target){ toast('请先在情境择岗中选择一个目标岗位'); switchTab('t3'); return; }
+    loading('正在生成定制简历与逐字稿','对齐岗位职责，标注每条证据来源…',1200,()=>{
+      RUN.materials=true; unlock(4); setScreen('deliver');
+    });
+  }
+  function doDownload(btn){ pressLoad(btn,'一致性复核中…',1000,()=>toast('验收通过，简历已开始下载（示例）')); }
+
+  /* ---------- 首页交互 ---------- */
+  function selectFile(el,name){
+    el.parentElement.querySelectorAll('a').forEach(a=>{ a.style.background=''; a.classList.remove('text-white'); });
+    el.style.background='rgba(36,87,245,.28)'; el.classList.add('text-white');
+    toast('已加入本次分析：'+name);
+  }
+  function openHistory(kind,name){
+    if(kind==='output'){
+      unlock(4); setScreen('deliver'); toast('已打开历史成果：'+name); return;
+    }
+    unlock(3); setScreen('workspace'); switchTab(kind==='jd'?'t2':'t1');
+    toast('已从资料库打开：'+name);
+  }
+  function bindLibraryPaths(){
+    const groups=document.querySelectorAll('#screen-home aside .grp');
+    const kinds=['personal','jd','output'];
+    groups.forEach((group,index)=>group.querySelectorAll('a').forEach(a=>{
+      const name=a.textContent.trim().replace(/\s+新$/,'');
+      a.onclick=()=>openHistory(kinds[index],name);
+      a.setAttribute('role','button'); a.setAttribute('tabindex','0');
+      a.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openHistory(kinds[index],name); } });
+    }));
+    document.querySelectorAll('#screen-home nav a').forEach((a,index)=>{
+      a.setAttribute('role','button'); a.setAttribute('tabindex','0');
+      a.onclick=()=>openHistory(index===1?'output':'personal',a.textContent.trim());
+    });
+    document.querySelectorAll('#screen-workspace #wsLeftFull .grp a').forEach(a=>{
+      a.setAttribute('role','button'); a.setAttribute('tabindex','0');
+      a.onclick=()=>{
+        document.querySelectorAll('#screen-workspace #wsLeftFull .grp a').forEach(x=>x.classList.remove('bg-brand-50','text-brand-700'));
+        a.classList.add('bg-brand-50','text-brand-700'); toast('已切换资料：'+a.textContent.trim());
+      };
+    });
+  }
+  function resolvePill(el){
+    el.className='pill on-dark'; el.style='';
+    el.innerHTML='<span class="dot bg-brand"></span><b class="font-semibold" style="color:#1b45cc">个人偏好</b>· base 杭州';
+    el.onclick=null; el.onkeydown=null; el.removeAttribute('role'); el.removeAttribute('tabindex');
+    RUN.classificationResolved=true; updateParseGate(); toast('已归类为个人偏好');
+  }
+  function changeMaterialType(select){
+    const pill=select.closest('.material-pill');
+    pill?.classList.toggle('pending',select.value==='unknown');
+    const selects=[...document.querySelectorAll('.material-type-select')];
+    const pending=selects.filter(item=>item.value==='unknown').length;
+    RUN.classificationResolved=pending===0;
+    const count=document.getElementById('classificationCount');
+    if(count) count.textContent=`${selects.length} 项${pending?` · ${pending} 项待确认`:' · 已确认'}`;
+    updateParseGate();
+    toast(select.value==='unknown'?'该资料仍待确认':'资料类型已更新');
+  }
+  function setConsent(checked){
+    RUN.consent=checked;
+    document.getElementById('consentRow')?.classList.remove('is-error');
+    document.getElementById('parseHint')?.classList.remove('is-error');
+    updateParseGate();
+  }
+  function updateParseGate(){
+    const hint=document.getElementById('parseHint');
+    const btn=document.getElementById('parseBtn');
+    if(!hint||!btn) return;
+    if(!RUN.classificationResolved) hint.textContent='还需确认 1 项分类并完成授权。';
+    else if(!RUN.consent) hint.textContent='分类已确认；勾选授权后即可解析。';
+    else hint.textContent='分类与授权已确认，可以开始解析。';
+    btn.classList.toggle('ring-pulse',RUN.classificationResolved&&RUN.consent);
+  }
+
+  /* ---------- 访谈交互 ---------- */
+  const QUESTIONS=[
+    {k:'核实冲突点 · 第 6 题', t:'请选择你在校园 AI 助手中的实际负责范围', d:'你的选择只用于判断职责范围和岗位方向，不代表能力高低。', o:['我主导了需求方向并组织落地','我主导部分环节，另有同学配合','主要执行既定方案'], c:1, f:'补充说明（最多 2 轮）：请写下你亲自拍板的一项关键决定。'},
+    {k:'意愿澄清 · 第 7 题', t:'请选择你更偏好的任务推进方式', d:'你的选择用于区分纵深型与并行型岗位，只影响岗位方向，不代表能力高低。', o:['更想把一个方向做深','两者兼顾，视阶段而定','更喜欢多线程并行'], c:0, f:'补充说明：请写下一次最有成就感的推进经历。'},
+    {k:'外部条件 · 第 8 题', t:'请选择你可以接受的工作城市', d:'工作城市会作为岗位筛选的硬条件，不符合条件的岗位将移出优先列表。', o:['仅接受杭州','杭州优先，可扩展到上海','城市不是主要约束'], c:1, f:'补充说明：请写下你在城市选择上的主要考虑。'},
+  ];
+  const FOLLOW_SVG='<svg class="h-3.5 w-3.5 text-brand-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+  function escapeHtml(value){
+    return String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[char]));
+  }
+  function renderQuestion(){
+    const q=QUESTIONS[RUN.ivIndex];
+    document.getElementById('ivKicker').textContent=q.k;
+    document.getElementById('ivTitle').textContent=q.t;
+    document.getElementById('ivDesc').textContent=q.d;
+    document.getElementById('ivOptions').innerHTML=q.o.map((o,i)=>
+      `<label class="flex items-center gap-3 rounded-xl px-4 h-12 cursor-pointer fade-move ${i===q.c?'bg-brand-50 border border-brand':'hair bg-white/70 hover:border-brand'}"><input type="radio" name="ivq" class="accent-brand" ${i===q.c?'checked':''} onchange="pickOpt(${i})"><span class="text-[14px]">${o}</span></label>`
+    ).join('');
+    renderFollowup();
+    document.getElementById('ivBar').style.width=(RUN.ivDone/RUN.ivTotal*100)+'%';
+    document.getElementById('ivLabel').textContent=`${RUN.ivDone} / ${RUN.ivTotal} 已完成 · 已自动保存`;
+  }
+  function pickOpt(i){ QUESTIONS[RUN.ivIndex].c=i; renderQuestion(); }
+  function renderFollowup(){
+    const q=QUESTIONS[RUN.ivIndex];
+    const box=document.getElementById('ivFollow');
+    if(q.a){
+      box.innerHTML=`<div class="rounded-xl border border-brand-100 bg-brand-50/70 px-3.5 py-3 text-[12px]">
+        <div class="flex items-center justify-between"><span class="font-semibold text-brand-700 inline-flex items-center gap-1.5">${FOLLOW_SVG}追问已回答</span><button onclick="openFollowup()" class="text-brand-700 hover:underline">编辑</button></div>
+        <p class="mt-1.5 text-slate-600 leading-relaxed">${escapeHtml(q.a)}</p>
+      </div>`;
+      return;
+    }
+    box.innerHTML=`<button onclick="openFollowup()" class="chip bg-white/75 px-3 h-9 text-[12px] text-slate-500 hover:border-brand press inline-flex items-center gap-2">${FOLLOW_SVG}<span>${q.f}</span><span class="text-brand-700 font-medium">回答</span></button>`;
+  }
+  function openFollowup(){
+    const q=QUESTIONS[RUN.ivIndex];
+    const box=document.getElementById('ivFollow');
+    box.innerHTML=`<div class="rounded-2xl border border-brand-100 bg-white/80 p-3.5 shadow-sm">
+      <div class="flex items-center gap-2 text-[11px] font-semibold text-brand-700">${FOLLOW_SVG}<span>AI 追问 · 可选 · 第 1/2 轮</span></div>
+      <p class="mt-2 text-[12.5px] text-slate-700 leading-relaxed">${q.f.replace('追问（最多 2 轮）：','')}</p>
+      <textarea id="ivFollowAnswer" rows="2" class="mt-2.5 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12.5px] leading-relaxed outline-none focus:border-brand focus:ring-4 focus:ring-brand-50" placeholder="补充你当时的判断、行动或结果…">${escapeHtml(q.a||'')}</textarea>
+      <div class="mt-2 flex items-center justify-between"><span class="text-[10px] text-slate-400">回答会作为事实线索，仍需证据核实</span><div class="flex gap-2"><button onclick="renderFollowup()" class="h-8 px-3 rounded-lg text-[11px] text-slate-500 hover:bg-slate-50">暂不补充</button><button onclick="saveFollowup()" class="h-8 px-3 rounded-lg bg-brand text-white text-[11px] font-medium">保存回答</button></div></div>
+    </div>`;
+    requestAnimationFrame(()=>document.getElementById('ivFollowAnswer')?.focus());
+  }
+  function saveFollowup(){
+    const value=document.getElementById('ivFollowAnswer')?.value.trim();
+    if(!value){ toast('请先填写回答，或选择“暂不补充”'); return; }
+    QUESTIONS[RUN.ivIndex].a=value;
+    renderFollowup(); toast('追问回答已保存');
+  }
+  function nextQuestion(btn){
+    if(RUN.ivIndex<QUESTIONS.length-1){
+      RUN.ivIndex++; RUN.ivDone=Math.min(RUN.ivTotal,RUN.ivDone+1); renderQuestion(); toast('已保存本题');
+    } else {
+      RUN.ivDone=RUN.ivTotal; renderQuestion();
+      document.getElementById('ivConfirm').classList.add('ring-pulse');
+      toast('必答完成，可在右侧确认策略进入定向');
+    }
+  }
+  function prevQuestion(){ if(RUN.ivIndex>0){ RUN.ivIndex--; renderQuestion(); } else toast('已经是第一题'); }
+
+  /* ---------- 工作台 Tab ---------- */
+  function switchTab(id,silent){
+    RUN.tab=id;
+    document.querySelectorAll('.ws-panel').forEach(p=>p.classList.add('hidden'));
+    const panel=document.getElementById(id); if(panel) panel.classList.remove('hidden');
+    document.querySelectorAll('.ws-tab').forEach(b=>{
+      const on=b.dataset.tab===id;
+      b.classList.toggle('bg-white',on); b.classList.toggle('text-brand-700',on); b.classList.toggle('shadow-sm',on);
+      b.classList.toggle('text-slate-500',!on);
+    });
+    if(!silent) syncStepper();
+  }
+  document.querySelectorAll('.ws-tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+
+  /* ---------- 交付 Tab ---------- */
+  document.querySelectorAll('.d-tab').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.dataset.dtab;
+    document.querySelectorAll('.d-panel').forEach(p=>p.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    document.querySelectorAll('.d-tab').forEach(x=>{
+      const on=x.dataset.dtab===id;
+      x.classList.toggle('bg-white',on); x.classList.toggle('text-brand-700',on); x.classList.toggle('shadow-sm',on); x.classList.toggle('text-slate-500',!on);
+    });
+  }));
+
+  /* ---------- 简历信息确认 / 成品预览 ---------- */
+  function switchResumeStage(stage){
+    document.querySelectorAll('.resume-stage-panel').forEach(panel=>panel.classList.add('hidden'));
+    document.getElementById('resume-'+stage)?.classList.remove('hidden');
+    document.querySelectorAll('.resume-stage-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.rstage===stage));
+    if(stage==='preview') syncResumePreview();
+  }
+  function formatResume(command){
+    document.getElementById('resumeEditor')?.focus();
+    document.execCommand(command,false,null);
+    markResumeDirty();
+  }
+  let resumeSaveTimer=null;
+  function markResumeDirty(){
+    const state=document.getElementById('resumeSaveState');
+    if(state) state.textContent='有未保存修改';
+    clearTimeout(resumeSaveTimer);
+    resumeSaveTimer=setTimeout(()=>{ if(state) state.textContent='已自动保存 · 刚刚'; },900);
+  }
+  function syncResumePreview(){
+    const editor=document.getElementById('resumeEditor'); const page=document.getElementById('resumePreviewPage');
+    if(editor&&page) page.innerHTML=editor.innerHTML;
+  }
+  function saveResumeDraft(){
+    syncResumePreview();
+    const state=document.getElementById('resumeSaveState'); if(state) state.textContent='草稿已保存 · 刚刚';
+    switchResumeStage('preview'); toast('信息已确认，正在展示简历成品预览');
+  }
+  function switchPreviewFormat(format){
+    document.querySelectorAll('.preview-format').forEach(btn=>{
+      const on=btn.dataset.format===format;
+      btn.classList.toggle('bg-white',on); btn.classList.toggle('text-brand-700',on); btn.classList.toggle('shadow-sm',on); btn.classList.toggle('text-slate-500',!on);
+    });
+    const name=document.getElementById('previewFileName');
+    if(name) name.textContent=format==='pdf'?'杨浩宇_用户研究员_简历.pdf':'杨浩宇_用户研究员_简历.docx';
+    toast(format==='pdf'?'已切换 PDF 预览':'已切换 Word 预览');
+  }
+
+  /* ---------- 方向计数 ---------- */
+  document.querySelectorAll('.g2').forEach(c=>c.addEventListener('change',()=>{
+    document.getElementById('g2count').textContent=document.querySelectorAll('.g2:checked').length;
+  }));
+  function confirmDirections(){
+    const count=document.querySelectorAll('.g2:checked').length;
+    if(count<1){ toast('请至少选择一个方向再进入情境择岗'); return; }
+    RUN.directions=count; switchTab('t3');
+    document.querySelector('[data-sc="real"]')?.focus();
+  }
+
+  /* ---------- 左右栏折叠 ---------- */
+  let leftOpen=true,rightOpen=true;
+  function updateWs(){
+    const g=document.getElementById('wsGrid');
+    g.style.gridTemplateColumns=`${leftOpen?'248px':'46px'} minmax(0,1fr) ${rightOpen?'268px':'46px'}`;
+    document.getElementById('wsLeftFull').classList.toggle('hidden',!leftOpen);
+    document.getElementById('wsLeftRail').classList.toggle('hidden',leftOpen);
+    document.getElementById('wsRightFull').classList.toggle('hidden',!rightOpen);
+    document.getElementById('wsRightRail').classList.toggle('hidden',rightOpen);
+  }
+  function toggleLeft(){
+    leftOpen=!leftOpen;
+    if(window.innerWidth<=1100 && leftOpen) rightOpen=false;
+    updateWs();
+  }
+  function toggleRight(){
+    rightOpen=!rightOpen;
+    if(window.innerWidth<=1100 && rightOpen) leftOpen=false;
+    updateWs();
+  }
+
+  /* ---------- 资料库分组展开 ---------- */
+  function toggleGroup(btn){
+    const grp=btn.nextElementSibling;
+    const caret=btn.querySelector('.caret');
+    grp.classList.toggle('hidden');
+    caret.classList.toggle('open');
+  }
+  function collapseAllGroups(scopeId){
+    const scope=document.getElementById(scopeId); if(!scope) return;
+    const groups=scope.querySelectorAll('aside .grp');
+    const anyOpen=[...groups].some(g=>!g.classList.contains('hidden'));
+    groups.forEach(g=>{
+      g.classList.toggle('hidden',anyOpen);
+      const caret=g.previousElementSibling?.querySelector('.caret');
+      if(caret) caret.classList.toggle('open',!anyOpen);
+    });
+    toast(anyOpen?'已折叠全部分组':'已展开全部分组');
+  }
+
+  /* ---------- 右侧抽屉 ---------- */
+  function openDrawer(){ const d=document.getElementById('drawer'),p=document.getElementById('drawerPanel'); d.classList.remove('hidden'); requestAnimationFrame(()=>{ p.style.transform='translateX(0)'; }); }
+  function closeDrawer(){ const d=document.getElementById('drawer'),p=document.getElementById('drawerPanel'); p.style.transform='translateX(100%)'; setTimeout(()=>d.classList.add('hidden'),320); }
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+  function acc(title,inner,open){ return `<details class="acc"${open?' open':''}><summary>${title}<span class="ac">›</span></summary><div class="body">${inner}</div></details>`; }
+
+  /* JD · Ownership 数据 */
+  const JOBDETAIL={
+    '用户研究员':{sub:'某厂 · 用户体验中心 · 杭州 · 校招',
+      jd:['围绕核心产品开展用户研究，独立输出研究报告与可执行的设计 / 策略建议；','设计并执行定性与定量研究：深度访谈、焦点小组、问卷、可用性测试；','搭建并维护用户样本库，持续跟踪关键人群的行为与态度变化；','与产品、设计、运营紧密协作，把研究洞察转化为需求与迭代方向；','跟踪行业与竞品动态，沉淀可复用的研究方法论与工具模板。'],
+      own:[{t:'研究规划责任',d:'从模糊的业务问题出发，独立定义研究目标、拆解假设、选择方法与样本，并对研究能否回答业务问题负责。'},{t:'研究执行责任',d:'独立完成招募、访谈、记录与分析，保证过程规范、样本无偏、证据可回溯，并对数据质量与结论可信度负责。'},{t:'洞察转化责任',d:'把原始发现提炼为结构化洞察，转化为产品和设计可直接使用的决策建议，并推动落地、回收反馈。'}],
+      match:'与你“主导校园 AI 助手需求访谈、组织信息架构”的经历高度重合——你已经在做研究规划与洞察转化的雏形，可立即上手。'},
+    '产品运营':{sub:'某厂 · 增长运营部 · 杭州 · 校招',
+      jd:['负责产品某一模块的日常运营，制定并执行运营策略；','通过数据发现问题、拆解目标，设计并落地拉新 / 留存 / 转化动作；','策划并执行线上活动，跟踪核心指标并复盘迭代；','协同产品与设计优化用户路径，提升关键转化。'],
+      own:[{t:'目标拆解责任',d:'把运营目标拆成可执行的动作与指标，并确保每项动作指向目标。'},{t:'策略执行责任',d:'独立推进活动与策略从设计到上线，对过程与结果形成闭环。'},{t:'数据复盘责任',d:'用数据判断动作有效性，沉淀可复用的运营方法并持续改进。'}],
+      match:'你的问题结构化与推进型工作方式可直接迁移；需补充数据看板与增长模型的实操经验。'},
+    '社区产品运营':{sub:'大厂 · 社区业务 · 杭州 · 校招',
+      jd:['负责社区内容生态与用户氛围的运营；','设计 UGC 激励机制，提升内容供给与互动；','挖掘并运营核心用户 / KOC，维持社区调性；','通过数据监测社区健康度并优化策略。'],
+      own:[{t:'内容生态责任',d:'对社区的内容供给与调性负责，主导激励机制的设计与调整。'},{t:'用户运营责任',d:'识别并培育核心用户，对社区活跃与留存负责。'}],
+      match:'你的用户研究与内容敏感度契合；需补充社区调性运营与数据抽取能力。'},
+    '数据产品经理':{sub:'某厂 · 数据平台 · 杭州 · 校招',
+      jd:['负责数据产品 / 指标平台的需求梳理与设计；','将业务问题翻译为指标体系与数据模型；','协同数据工程与分析师推进数据链路建设；','沉淀数据规范，提升数据的可用性与一致性。'],
+      own:[{t:'指标定义责任',d:'从业务目标出发定义可观测指标，确保指标真实反映业务。'},{t:'数据方案责任',d:'主导数据模型与链路方案，对数据的准确与一致负责。'}],
+      match:'你具备问题结构化的底子，但 SQL、数仓与指标体系是较大缺口，属需系统补强的方向。'},
+    '商业分析师':{sub:'某厂 · 战略分析 · 杭州 · 校招',
+      jd:['围绕业务问题开展分析，输出结论与建议；','搭建分析框架与模型，支撑经营决策；','跟踪市场与竞争，形成行业判断。'],
+      own:[{t:'分析框架责任',d:'选择合适的分析框架回答商业问题。'},{t:'结论落地责任',d:'确保分析结论能够支撑业务决策。'}],
+      match:'与你的结构化能力部分相关，但更依赖定量建模与商业敏感度，暂列观望。'},
+    '算法工程师':{sub:'某厂 · AI Lab · 杭州 · 校招',
+      jd:['负责算法模型的设计、训练与工程落地；','要求扎实的数学、机器学习与工程能力；','通常要求硕士及以上学历。'],
+      own:[{t:'模型效果责任',d:'对模型效果与工程落地负责。'}],
+      match:'硬条件（学历 / 专业方向）不符，已归入回避区；此处仅供了解职责差异。'},
+  };
+  function openJD(name){
+    const d=JOBDETAIL[name];
+    document.getElementById('drawerKicker').textContent='岗位职责与责任范围';
+    document.getElementById('drawerTitle').textContent=name;
+    document.getElementById('drawerSub').textContent=d?d.sub:'';
+    const body=document.getElementById('drawerBody');
+    if(!d){ body.innerHTML='<div class="text-[13px] text-slate-500">该岗位暂无拆解数据。</div>'; openDrawer(); return; }
+    const jd='<ul class="list-disc pl-4 space-y-1.5">'+d.jd.map(x=>`<li>${x}</li>`).join('')+'</ul>';
+    const own=d.own.map(o=>`<div class="mb-2.5"><div class="text-[13px] font-semibold text-slate-800">${o.t}</div><p class="mt-0.5">${o.d}</p></div>`).join('');
+    body.innerHTML=
+      acc('岗位职责 JD', jd, true)+
+      acc('责任范围 · 这份工作需要承担什么', own, true)+
+      acc('与你的匹配点', `<p>${d.match}</p>`, false);
+    openDrawer();
+  }
+  window.openJD=openJD;
+
+  /* ---------- 情境择岗重排 ---------- */
+  const GAPS={
+    '用户研究员':{have:['需求访谈与提纲设计','问题结构化 / 信息架构','跨角色协作推进落地'],need:[{t:'定量研究设计',d:'目前以定性访谈为主，缺少问卷信效度、抽样与显著性检验的系统训练。',lv:'可补 · 预计 1–2 月'},{t:'研究工具链',d:'需补充 SQL 取数与可用性测试平台的实操能力。',lv:'可补 · 课程 + 实操'}]},
+    '产品运营':{have:['问题拆解与目标对齐','用户视角与内容组织','推进型执行'],need:[{t:'数据看板搭建',d:'需要掌握核心指标定义与看板搭建，形成数据驱动的运营节奏。',lv:'可补'},{t:'增长模型拆解',d:'补充拉新—留存—转化的漏斗设计与复盘经验。',lv:'可补'}]},
+    '社区产品运营':{have:['用户研究','内容敏感度','方案验证'],need:[{t:'内容策略',d:'补充社区调性运营与 UGC 激励机制设计。',lv:'可补'},{t:'数据抽取',d:'需要基础的数据抽取与分析能力支撑决策。',lv:'可补'}]},
+    '数据产品经理':{have:['问题结构化','跨角色协作'],need:[{t:'SQL 与数据建模',d:'需要系统的 SQL、数仓与指标体系训练，这是当前最大缺口。',lv:'需补 · 成本较高'},{t:'指标体系拆解',d:'从业务目标到可观测指标的拆解经验不足。',lv:'需补'}]},
+  };
+  const JOBS={
+    real:[
+      {n:'用户研究员',c:'某厂 · 杭州',r:'up',t:'研究方法与访谈经验最贴合，可立即上手'},
+      {n:'产品运营',c:'某厂 · 杭州',r:'up',t:'问题结构化能力可直接迁移'},
+      {n:'数据产品经理',c:'某厂 · 杭州',r:'down',t:'需要更系统的数据建模训练'},
+    ],
+    subj:[
+      {n:'用户研究员',c:'某厂 · 杭州',r:'up',t:'最贴合你“想深入理解用户”的意愿'},
+      {n:'社区产品运营',c:'某厂 · 杭州',r:'up',t:'内容偏好与你的兴趣一致'},
+      {n:'产品运营',c:'某厂 · 杭州',r:'down',t:'偏指标驱动，与主观偏好略有距离'},
+    ],
+    ext:[
+      {n:'产品运营',c:'某厂 · 杭州',r:'up',t:'杭州名额多，落地性最高'},
+      {n:'社区产品运营',c:'某厂 · 杭州',r:'up',t:'base 杭州符合外部约束'},
+      {n:'用户研究员',c:'某研究院 · 上海',r:'block',t:'岗位在扩展地域外，硬条件不符',block:'该岗位 base 上海，超出你“杭州（可扩上海）”里的实际可接受范围，属硬条件不符，已移出主序列。若愿意放宽通勤约束，可在策略里调整后重排。'},
+    ],
+  };
+  const DESC={real:'现实优先：更看重当前客观能力匹配与可落地性。',subj:'主观优先：更看重你的意愿、内容偏好与发展意愿。',ext:'外部条件优先：更看重城市、薪资与硬性约束（硬条件不符则一票否决）。'};
+  function openGap(j){
+    document.getElementById('drawerKicker').textContent='单岗差距清单 · GAP';
+    document.getElementById('drawerTitle').textContent=j.n;
+    document.getElementById('drawerSub').textContent=j.c;
+    const body=document.getElementById('drawerBody');
+    if(j.r==='block'){
+      body.innerHTML=`<div class="rounded-xl p-4 text-[13px] leading-relaxed" style="background:#fdeceb;border:1px solid #f7cfcd;color:#b3271e"><div class="font-bold mb-1">硬条件不符 · 一票否决</div>${j.block||j.t}</div>`
+        + `<p class="text-[12px] text-slate-400 mt-3">回避区岗位不参与差距补强建议，避免无效投入。</p>`;
+      openDrawer(); return;
+    }
+    const g=GAPS[j.n];
+    const have= g? '<div class="flex flex-wrap gap-1.5">'+g.have.map(h=>`<span class="chip bg-brand-50 text-brand-700 px-2.5 py-1 text-[12px]">${h}</span>`).join('')+'</div>' : '<div class="text-slate-400">—</div>';
+    const need= g? g.need.map(n=>`<div class="mb-2.5"><div class="flex items-center gap-2"><span class="text-[13px] font-semibold text-slate-800">${n.t}</span><span class="chip px-2 py-0.5 text-[11px]" style="background:#fdf9ec;border-color:#f0dfa6;color:#9a6a00">${n.lv}</span></div><p class="mt-0.5">${n.d}</p></div>`).join('') : '<div class="text-slate-400">—</div>';
+    body.innerHTML=
+      acc('你已具备（可迁移能力）', have, true)+
+      acc('待补强的差距 · 如何补', need, true)+
+      acc('岗位排序说明', `<p>${j.t}</p>`, false);
+    openDrawer();
+  }
+  function renderJobs(sc){
+    RUN.scenario=sc;
+    const box=document.getElementById('jobList'); box.innerHTML='';
+    JOBS[sc].forEach((j,i)=>{
+      const tag = j.r==='up'?'<span class="reason-up chip px-2 py-0.5 text-[11px]">↑ 上移</span>'
+        : j.r==='down'?'<span class="reason-down chip px-2 py-0.5 text-[11px]">↓ 下移</span>'
+        : '<span class="reason-block chip px-2 py-0.5 text-[11px]">⊘ 移出</span>';
+      const el=document.createElement('div');
+      el.className='job-row fade-move'+(j.r==='block'?' opacity-70':'');
+      el.innerHTML=`
+        <div class="job-info">
+          <div class="flex items-center gap-2">
+            <div class="h-7 w-7 rounded-lg bg-brand-50 text-brand-700 grid place-items-center text-[13px] font-bold shrink-0">${i+1}</div>
+            <div class="text-[15px] font-bold ${j.r==='block'?'line-through text-slate-400':''}">${j.n}</div>
+            ${tag}
+          </div>
+          <div class="text-[12px] text-slate-400 mt-1.5 pl-9">${j.c}</div>
+          <div class="text-[12.5px] text-slate-600 mt-2 pl-9 leading-relaxed"><span class="font-semibold text-slate-700">排序依据：</span>${j.t}</div>
+        </div>
+        <div class="job-actions">
+          <button class="gapBtn inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg text-[12px] font-medium whitespace-nowrap press ${j.r==='block'?'text-risk border border-[#f7cfcd] bg-white':'text-slate-600 border border-slate-200 bg-white hover:border-brand hover:text-brand-700'}"><svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>差距清单</button>
+          ${j.r!=='block'?'<button class="pickBtn inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-lg text-[12px] font-semibold whitespace-nowrap bg-brand text-white shadow-lift hover:bg-brand-700 press">选为目标</button>':'<span class="text-[10.5px] text-slate-400 text-center leading-tight">硬条件不符<br>不参与选择</span>'}
+        </div>`;
+      box.appendChild(el);
+      el.querySelector('.gapBtn').addEventListener('click',()=>openGap(j));
+      const pick=el.querySelector('.pickBtn');
+      if(pick && RUN.target===j.n){ pick.textContent='✓ 已选目标'; pick.classList.add('is-selected'); }
+      if(pick) pick.addEventListener('click',()=>{
+        RUN.target=j.n;
+        document.querySelectorAll('.pickBtn').forEach(x=>{ x.textContent='选为目标'; x.classList.remove('is-selected'); });
+        pick.textContent='✓ 已选目标'; pick.classList.add('is-selected');
+        const card=document.getElementById('targetCard');
+        card.innerHTML=`<div class="text-[13px] font-semibold">${j.n}</div><div class="text-[11px] text-slate-400 mt-0.5">${j.c}</div><span class="chip bg-brand-50 text-brand-700 px-2 py-0.5 text-[11px] mt-2 inline-block">已选定 · ${RUN.scenario==='real'?'现实优先':RUN.scenario==='subj'?'主观优先':'外部条件优先'}</span>`;
+        const generate=document.getElementById('generateBtn'); generate.disabled=false; generate.textContent='生成求职物料 →';
+        toast('已选为目标岗位：'+j.n);
+      });
+    });
+    document.getElementById('scDesc').textContent=DESC[sc];
+    document.querySelectorAll('.sc-btn').forEach(b=>{
+      b.classList.toggle('active',b.dataset.sc===sc);
+    });
+  }
+  document.querySelectorAll('.sc-btn').forEach(b=>b.addEventListener('click',()=>renderJobs(b.dataset.sc)));
+
+  /* ---------- 宇宙星系 · Three.js 粒子系统 ---------- */
+  let G=null;
+  function initGalaxy(){
+    if(!window.THREE){ return; }
+    const canvas=document.getElementById('galaxy'); if(!canvas) return;
+    const scene=new THREE.Scene();
+    scene.fog=new THREE.FogExp2(0x050912,0.11);
+    const camera=new THREE.PerspectiveCamera(62,1,0.1,100);
+    camera.position.set(0,1.15,6.2);
+    const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+    renderer.setClearColor(0x000000,0);
+
+    const COUNT=6200, ARMS=4, RMAX=5.4;
+    const pos=new Float32Array(COUNT*3), col=new Float32Array(COUNT*3);
+    const cIn=new THREE.Color('#ffffff'), cMid=new THREE.Color('#73a2ff'), cOut=new THREE.Color('#2457a8');
+    for(let i=0;i<COUNT;i++){
+      const r=Math.pow(Math.random(),0.72)*RMAX;
+      const branch=((i%ARMS)/ARMS)*Math.PI*2;
+      const spin=r*0.82;
+      const sp=()=>(Math.pow(Math.random(),3)*(Math.random()<0.5?1:-1))*(0.16+r*0.06);
+      const a=branch+spin;
+      pos[i*3]  =Math.cos(a)*r+sp();
+      pos[i*3+1]=(Math.random()*2-1)*0.12*(1-r/RMAX*0.5)+sp()*0.35;
+      pos[i*3+2]=Math.sin(a)*r+sp();
+      const c=cIn.clone().lerp(cMid,Math.min(1,r/RMAX*1.35));
+      c.lerp(cOut,Math.max(0,(r/RMAX-0.62)/0.38));
+      col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+    }
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('color',new THREE.BufferAttribute(col,3));
+    const mat=new THREE.PointsMaterial({size:0.045,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:0.72,depthWrite:false,blending:THREE.AdditiveBlending});
+    const points=new THREE.Points(geo,mat);
+    points.rotation.x=-0.42;
+    scene.add(points);
+
+    const core=new THREE.Mesh(new THREE.SphereGeometry(0.18,24,24), new THREE.MeshBasicMaterial({color:0xdfeaff,transparent:true,opacity:0.34,blending:THREE.AdditiveBlending}));
+    scene.add(core);
+
+    G={scene,camera,renderer,points,canvas,speed:1,travel:0,mx:0,my:0,baseZ:6.2};
+    resizeGalaxy(); loopGalaxy();
+    const hero=canvas.parentElement;
+    hero.addEventListener('mousemove',e=>{ const b=hero.getBoundingClientRect(); G.mx=((e.clientX-b.left)/b.width-0.5); G.my=((e.clientY-b.top)/b.height-0.5); });
+    hero.addEventListener('mouseleave',()=>{ G.mx=0; G.my=0; });
+  }
+  function resizeGalaxy(){ if(!G) return; const c=G.canvas,w=c.clientWidth||1,h=c.clientHeight||1; G.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2)); G.renderer.setSize(w,h,false); G.camera.aspect=w/h; G.camera.updateProjectionMatrix(); }
+  function loopGalaxy(){
+    if(!G) return; requestAnimationFrame(loopGalaxy);
+    if(RUN.screen!=='login' && G.travel===0) return;   // 离开登录页后暂停渲染以省资源
+    G.points.rotation.y += 0.00028*G.speed;
+    const targetZ=G.baseZ - G.travel*7.4;
+    G.camera.position.x += (G.mx*0.9 - G.camera.position.x)*0.05;
+    G.camera.position.y += (1.15 - G.my*0.7 - G.camera.position.y)*0.05;
+    G.camera.position.z += (targetZ - G.camera.position.z)*0.08;
+    G.camera.lookAt(0,0,0);
+    G.renderer.render(G.scene,G.camera);
+  }
+  function galaxyTravel(cb){
+    if(!G){ flash(cb); return; }
+    const t0=performance.now(), dur=1750;
+    (function step(now){
+      const p=Math.min((now-t0)/dur,1);
+      G.speed=1+p*p*30;
+      G.travel=Math.pow(p,1.7);
+      if(p<1) requestAnimationFrame(step);
+      else { flash(()=>{ G.speed=1; G.travel=0; G.camera.position.set(0,1.15,6.2); cb&&cb(); }); }
+    })(t0);
+  }
+  window.galaxyTravel=galaxyTravel;
+  window.addEventListener('resize',resizeGalaxy);
+
+  /* ---------- 初始化 ---------- */
+  renderQuestion();
+  renderJobs('real');
+  bindLibraryPaths();
+  updateParseGate();
+  if(window.innerWidth<=1100 && window.innerWidth>820){ leftOpen=false; updateWs(); }
+  setScreen('login');
+  if(document.readyState==='complete') initGalaxy();
+  else window.addEventListener('load',initGalaxy);
+</script>
+</body>
+</html>
+
+

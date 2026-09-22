@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>产品策略逻辑动画 · 高对比度修正版</title>
+  <style>
+    html,body{height:100%;margin:0}
+    body{display:grid;place-items:center;background:#fff;font-family:Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}
+    main{width:min(100vw,1600px,calc(100vh*16/9))}
+    .stage{aspect-ratio:16/9;background:#fff}
+    object{display:block;width:100%;height:100%}
+  </style>
+</head>
+<body>
+  <main>
+    <div class="stage"><object id="animation" data="projection-strategy-25s.svg" type="image/svg+xml"></object></div>
+  </main>
+  <script>
+    const view=document.getElementById("animation");
+
+    function enforceBlueContrast(){
+      const doc=view.contentDocument;
+      if(!doc)return;
+
+      const style=doc.createElementNS("http://www.w3.org/2000/svg","style");
+      style.textContent='text[fill="#fff"],text[fill="#ffffff"],text[fill="white"]{fill:#fff!important}';
+      doc.documentElement.appendChild(style);
+
+      const blueShapes=[...doc.querySelectorAll('[fill="#2457F5"],[fill="#2457f5"]')];
+      const labels=[...doc.querySelectorAll("text")];
+      blueShapes.forEach(function(shape){
+        const box=shape.getBoundingClientRect();
+        if(box.width<100||box.height<36)return;
+        labels.forEach(function(label){
+          const textBox=label.getBoundingClientRect();
+          const centerX=textBox.left+textBox.width/2;
+          const centerY=textBox.top+textBox.height/2;
+          if(centerX>=box.left&&centerX<=box.right&&centerY>=box.top&&centerY<=box.bottom){
+            label.style.setProperty("fill","#ffffff","important");
+          }
+        });
+      });
+    }
+
+    view.addEventListener("load",function(){
+      requestAnimationFrame(function(){requestAnimationFrame(enforceBlueContrast)});
+    });
+  </script>
+</body>
+</html>
